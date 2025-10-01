@@ -39,7 +39,6 @@
     .btn{ background:var(--accent); color:#fff; border:0; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer }
     .btn.secondary{ background:#fff; color:var(--accent); border:1px solid var(--accent) }
     .hide{ display:none !important }
-    .hint{ font-size:12px; color:var(--muted); padding:0 12px 12px }
     .alert{ margin-top:1%; padding:12px; border-radius:10px; border:1px solid #f59e0b; background:#fff7ed; color:#7c2d12; }
     @media (max-width:800px){
       .row{ grid-template-columns: 1fr; gap:6px }
@@ -82,12 +81,7 @@
         <select id="centroFilter"><option value="">Centro (todos)</option></select>
         <select id="etapaFilter"><option value="">Etapa (todas)</option></select>
         <select id="horarioFilter"><option value="">Horário (todos)</option></select>
-      </div>
-
-      <div class="hint">
-        Fonte de dados: <b id="srcLabel">a carregar…</b>
-        <span class="badge-src" id="srcBadge"></span>
-      </div>
+      </div> 
 
       <div id="warn" class="alert" style="display:none"></div>
       <div class="stats" id="stats">A carregar…</div>
@@ -205,12 +199,7 @@
       horarioFilter.addEventListener('change', apply);
 
       populate(); apply();
-    }
-
-    function setSource(label, extra=''){
-      document.getElementById('srcLabel').textContent = label;
-      document.getElementById('srcBadge').textContent = extra;
-    }
+    } 
     function showWarn(html){
       const w = document.getElementById('warn');
       w.innerHTML = html;
@@ -245,8 +234,7 @@
         sala: r[idx.sala] ?? '',
         horario: r[idx.horario] ?? ''
       }));
-      DATA.forEach(d => d.nascimento_fmt = fmtDate(d.nascimento));
-      setSource('dados-catequese.xlsx', 'XLSX');
+      DATA.forEach(d => d.nascimento_fmt = fmtDate(d.nascimento)); 
       return DATA;
     }
 
@@ -294,8 +282,7 @@
         sala: r[idx.sala] ?? '',
         horario: r[idx.horario] ?? ''
       }));
-      DATA.forEach(d => d.nascimento_fmt = fmtDate(d.nascimento));
-      setSource('dados-catequese.csv', 'CSV');
+      DATA.forEach(d => d.nascimento_fmt = fmtDate(d.nascimento)); 
       return DATA;
     }
 
@@ -308,9 +295,7 @@
         try{
           const data = await tryCSV();
           applySearchFactory(data);
-          showWarn('Carregado via <b>CSV</b> (fallback). Erro do XLSX: <code>'+String(excelErr.message || excelErr)+'</code>');
         }catch(csvErr){
-          showWarn('Falha geral.<br>Erro XLSX: <code>'+String(excelErr.message || excelErr)+'</code><br>Erro CSV: <code>'+String(csvErr.message || csvErr)+'</code><br>Confirme que <code>dados-catequese.xlsx</code> <i>ou</i> <code>dados-catequese.csv</code> estão publicados na raiz do site.');
           document.getElementById('stats').textContent = 'Falha ao carregar os dados.';
         }
       }
