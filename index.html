@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lista de Salas — Paróquia de São Paulo de Luanda</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
-  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-
   <style>
     :root{
       --bg:#fffdf6; --card:#ffffff; --ink:#1b1a17; --muted:#6b7280;
@@ -36,13 +34,20 @@
     .filters .sala-field{min-width:140px;flex:0 0 180px}
 
     .stats{padding:10px 4px;color:var(--muted);font-size:14px}
-    .results{margin-top:8px;width:100%}
+    .results{margin-top:8px;width:100%;overflow-x:hidden}
     .row{
-      display:grid;grid-template-columns:1.2fr 0.8fr 0.7fr 0.5fr 0.6fr;
-      gap:12px;align-items:center;padding:14px;border-bottom:1px dashed #f0e1b6
+      display:grid;
+      /* agora com 6 colunas: adicionámos Nascimento */
+      grid-template-columns: 1.2fr 0.7fr 0.8fr 0.7fr 0.5fr 0.6fr;
+      gap:12px;align-items:center;padding:14px;border-bottom:1px dashed #f0e1b6;
+      word-break:break-word;
     }
     .row:nth-child(odd){background:#fff9e9}
-    .row.header{font-weight:700;color:#111;background:#ffeab9;border-top-left-radius:12px;border-top-right-radius:12px;border-bottom:1px solid #f0e1b6}
+    .row.header{
+      font-weight:700;color:#111;background:#ffeab9;
+      border-top-left-radius:12px;border-top-right-radius:12px;border-bottom:1px solid #f0e1b6
+    }
+    .row > div{overflow:hidden;text-overflow:ellipsis;min-width:0}
     .center{color:#7a4d00;font-weight:600}
     .badge{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid #d1b35e;font-size:12px;background:#fff}
     mark{background:#fff2a8;padding:0 2px;border-radius:3px}
@@ -51,15 +56,21 @@
 
     /* MOBILE */
     @media (max-width:800px){
-      .hero-brand{align-items:flex-start}
+      .hero-brand{flex-direction:column;align-items:flex-start}
       .searchbar{flex-direction:column}
       .actions{width:100%}
       .actions .btn{flex:1}
       .filters{gap:6px}
-      .row{grid-template-columns:1fr;gap:6px}
+      .row{grid-template-columns:1fr;gap:6px;padding:12px}
       .row.header{display:none}
-      .row > div{display:flex;gap:8px}
-      .row > div::before{content:attr(data-label);min-width:110px;color:var(--muted)}
+      .row > div{display:flex;gap:6px;flex-wrap:wrap}
+      .row > div::before{
+        content:attr(data-label);
+        flex:0 0 110px;
+        font-weight:600;
+        color:var(--muted);
+      }
+      .badge{font-size:13px;padding:4px 8px}
     }
   </style>
 </head>
@@ -92,7 +103,7 @@
         <select id="centroFilter"><option value="">Centro (todos)</option></select>
         <select id="etapaFilter"><option value="">Etapa (todas)</option></select>
         <select id="horarioFilter"><option value="">Horário (todos)</option></select>
-        <!-- NOVO: pesquisa por número da sala -->
+        <!-- pesquisa por número da sala -->
         <input id="salaSearch" class="sala-field" type="search" inputmode="numeric" pattern="[0-9 ]*" placeholder="Sala (ex.: 305)" />
       </div>
 
@@ -147,7 +158,7 @@
       results.innerHTML = '';
       const header = document.createElement('div');
       header.className = 'row header';
-      header.innerHTML = `<div>Nome</div><div>Centro</div><div>Etapa</div><div>Sala</div><div>Horário</div>`;
+      header.innerHTML = `<div>Nome</div><div>Nascimento</div><div>Centro</div><div>Etapa</div><div>Sala</div><div>Horário</div>`;
       results.appendChild(header);
       const frag = document.createDocumentFragment();
       for(const d of list){
@@ -157,7 +168,8 @@
         const idx = norm(d.nome).indexOf(nq);
         const nomeHTML = (idx>=0 && nq) ? d.nome.slice(0,idx)+'<mark>'+d.nome.slice(idx,idx+nq.length)+'</mark>'+d.nome.slice(idx+nq.length) : d.nome;
         row.innerHTML = `
-          <div data-label="Nome">${nomeHTML}<div class="subtitle">Nascimento: ${d.nascimento_fmt || '-'}</div></div>
+          <div data-label="Nome">${nomeHTML}</div>
+          <div data-label="Nascimento">${d.nascimento_fmt || '-'}</div>
           <div data-label="Centro" class="center">${d.centro}</div>
           <div data-label="Etapa"><span class="badge">${d.etapa}</span></div>
           <div data-label="Sala"><span class="badge">${d.sala}</span></div>
@@ -197,13 +209,12 @@
         if(fCentro)  list = list.filter(d => d.centro === fCentro);
         if(fEtapa)   list = list.filter(d => d.etapa === fEtapa);
         if(fHorario) list = list.filter(d => d.horario === fHorario);
-        if(salaQ)    list = list.filter(d => norm(String(d.sala)).includes(salaQ)); // << pesquisa por sala
+        if(salaQ)    list = list.filter(d => norm(String(d.sala)).includes(salaQ)); // pesquisa por sala
         if(nq)       list = list.filter(d => norm(d.nome).includes(nq));
 
         render(list);
       }
 
-      // eventos
       let t;
       q.addEventListener('input', ()=>{ clearTimeout(t); t=setTimeout(apply,80); });
       salaSearch.addEventListener('input', ()=>{ clearTimeout(t); t=setTimeout(apply,80); });
@@ -218,12 +229,6 @@
       horarioFilter.addEventListener('change', apply);
 
       populate(); apply();
-    }
-
-    function showWarn(html){
-      const w = document.getElementById('warn');
-      w.innerHTML = html;
-      w.style.display = '';
     }
 
     async function tryXLSX(){
@@ -298,7 +303,9 @@
           applySearchFactory(data);
         }catch(csvErr){
           document.getElementById('stats').textContent = 'Falha ao carregar os dados.';
-          showWarn('Não foi possível carregar XLSX nem CSV.');
+          const w = document.getElementById('warn');
+          w.textContent = 'Não foi possível carregar o Excel nem o CSV.';
+          w.style.display = '';
         }
       }
     })();
