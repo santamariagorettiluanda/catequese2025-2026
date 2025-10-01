@@ -13,7 +13,7 @@
     }
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
-    .container{max-width:1100px;margin:0 auto;padding:24px}
+    .container{width:93%;margin:0 auto;padding:24px}
     header{position:static; background:transparent; border:0;}
     .card{margin:0 auto; margin-top:1%;width:89%;background:var(--card); border:1px solid #ecd39a; border-radius:var(--radius); box-shadow:0 2px 10px rgba(0,0,0,0.04)}
     .hero-brand{width:100%;margin-top:0; padding:18px; display:flex; gap:16px; align-items:center}
@@ -27,7 +27,7 @@
     .filters{ display:flex; flex-wrap:wrap; gap:8px }
     .filters select{ border:1px solid #d1b35e; border-radius:10px; padding:10px 12px; background:#fff; font-size:14px; }
     .stats{padding:10px 14px; color:var(--muted); font-size:14px}
-    .results{ margin-top:16px; width:100%}
+    .results{ margin-top:-1%; width:100%}
     .row{ display:grid; grid-template-columns: 1.2fr 0.8fr 0.7fr 0.5fr 0.6fr; gap:12px; align-items:center; padding:14px 14px; border-bottom:1px dashed #f0e1b6; }
     .row:nth-child(odd){ background: #fff9e9 }
     .row.header{ font-weight:700; color:#111; background:#ffeab9; border-top-left-radius:12px; border-top-right-radius:12px; border-bottom:1px solid #f0e1b6 }
@@ -83,13 +83,6 @@
         <select id="etapaFilter"><option value="">Etapa (todas)</option></select>
         <select id="horarioFilter"><option value="">Horário (todos)</option></select>
       </div>
-
-      <div class="hint">
-        Fonte de dados: <b id="srcLabel">a carregar…</b>
-        <span class="badge-src" id="srcBadge"></span>
-      </div>
-
-      <div id="warn" class="alert" style="display:none"></div>
       <div class="stats" id="stats">A carregar…</div>
     </div>
   </header>
