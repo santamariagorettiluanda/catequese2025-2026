@@ -6,7 +6,7 @@
   <title>Lista de Salas — Paróquia de São Paulo de Luanda</title>
   <!-- SheetJS para ler .xlsx via fetch -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
-  <style>
+    <style>
     :root{
       --bg:#fffdf6; --card:#ffffff; --ink:#1b1a17; --muted:#6b7280;
       --accent:#c28402; --accent-2:#d39f21; --ok:#16a34a; --warn:#b45309; --radius:16px;
@@ -15,19 +15,19 @@
     html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
     .container{max-width:1100px;margin:0 auto;padding:24px}
     header{position:static; background:transparent; border:0;}
-    .card{background:var(--card); border:1px solid #ecd39a; border-radius:var(--radius); box-shadow:0 2px 10px rgba(0,0,0,0.04)}
-    .hero-brand{margin-top:0; padding:18px; display:flex; gap:16px; align-items:center}
+    .card{margin:0 auto; margin-top:1%;width:89%;background:var(--card); border:1px solid #ecd39a; border-radius:var(--radius); box-shadow:0 2px 10px rgba(0,0,0,0.04)}
+    .hero-brand{width:100%;margin-top:0; padding:18px; display:flex; gap:16px; align-items:center}
     .hero-brand img{width:72px; height:auto; border-radius:12px; border:1px solid #ecd39a; background:#fff; padding:4px}
-    .searchbar{display:flex;gap:10px; padding:12px}
+    .searchbar{display:flex;gap:10px; margin-top:1%; margin-bottom:1%}
     .field{ position:relative; flex:1; }
     .field input[type="search"]{ width:100%; padding:14px 44px; border-radius:12px; border:1px solid #d1b35e; outline:none; font-size:16px; background:#fff; }
     .field input:focus{ border-color:var(--accent); box-shadow:0 0 0 3px rgba(194,132,2,0.15) }
     .field .icon{ position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:20px; color:var(--muted)}
     .clear-btn{ position:absolute; right:10px; top:50%; transform:translateY(-50%); border:0; background:transparent; cursor:pointer; font-size:18px; color:var(--muted); }
-    .filters{ display:flex; flex-wrap:wrap; gap:8px; padding:0 12px 12px }
+    .filters{ display:flex; flex-wrap:wrap; gap:8px }
     .filters select{ border:1px solid #d1b35e; border-radius:10px; padding:10px 12px; background:#fff; font-size:14px; }
     .stats{padding:10px 14px; color:var(--muted); font-size:14px}
-    .results{ margin-top:16px; }
+    .results{ margin-top:16px; width:100%}
     .row{ display:grid; grid-template-columns: 1.2fr 0.8fr 0.7fr 0.5fr 0.6fr; gap:12px; align-items:center; padding:14px 14px; border-bottom:1px dashed #f0e1b6; }
     .row:nth-child(odd){ background: #fff9e9 }
     .row.header{ font-weight:700; color:#111; background:#ffeab9; border-top-left-radius:12px; border-top-right-radius:12px; border-bottom:1px solid #f0e1b6 }
@@ -40,7 +40,7 @@
     .btn.secondary{ background:#fff; color:var(--accent); border:1px solid var(--accent) }
     .hide{ display:none !important }
     .hint{ font-size:12px; color:var(--muted); padding:0 12px 12px }
-    .alert{ margin:12px; padding:12px; border-radius:10px; border:1px solid #f59e0b; background:#fff7ed; color:#7c2d12; }
+    .alert{ margin-top:1%; padding:12px; border-radius:10px; border:1px solid #f59e0b; background:#fff7ed; color:#7c2d12; }
     @media (max-width:800px){
       .row{ grid-template-columns: 1fr; gap:6px }
       .row.header{ display:none }
