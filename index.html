@@ -202,11 +202,6 @@
       document.getElementById('srcLabel').textContent = label;
       document.getElementById('srcBadge').textContent = extra;
     }
-    function showWarn(html){
-      const w = document.getElementById('warn');
-      w.innerHTML = html;
-      w.style.display = '';
-    }
 
     async function tryXLSX(){
       const url = XLSX_URL + '?v=' + Date.now();
@@ -299,9 +294,7 @@
         try{
           const data = await tryCSV();
           applySearchFactory(data);
-          showWarn('Carregado via <b>CSV</b> (fallback). Erro do XLSX: <code>'+String(excelErr.message || excelErr)+'</code>');
         }catch(csvErr){
-          showWarn('Falha geral.<br>Erro XLSX: <code>'+String(excelErr.message || excelErr)+'</code><br>Erro CSV: <code>'+String(csvErr.message || csvErr)+'</code><br>Confirme que <code>dados-catequese.xlsx</code> <i>ou</i> <code>dados-catequese.csv</code> estão publicados na raiz do site.');
           document.getElementById('stats').textContent = 'Falha ao carregar os dados.';
         }
       }
