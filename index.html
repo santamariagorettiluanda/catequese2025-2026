@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lista de Salas — Paróquia de São Paulo de Luanda</title>
-  <!-- SheetJS para ler .xlsx -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
   <style>
     :root{
@@ -13,42 +12,52 @@
     }
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
-    .container{margin:0 auto;padding:24px}
-    header{position:static; background:transparent; border:0;}
-    .card{margin:0 auto; margin-top:1%;width:89%;background:var(--card); border:1px solid #ecd39a; border-radius:var(--radius); box-shadow:0 2px 10px rgba(0,0,0,0.04)}
-    .hero-brand{width:100%;margin-top:0; padding:18px; display:flex; gap:16px; align-items:center}
-    .hero-brand img{width:72px; height:auto; border-radius:12px; border:1px solid #ecd39a; background:#fff; padding:4px}
-    .searchbar{display:flex;gap:10px; margin-top:1%; margin-bottom:1%}
-    .field{ position:relative; flex:1; }
-    .field input[type="search"]{ width:100%; padding:8px 44px; border-radius:12px; border:1px solid #d1b35e; outline:none; font-size:16px; background:#fff; }
-    .field input:focus{ border-color:var(--accent); box-shadow:0 0 0 3px rgba(194,132,2,0.15) }
-    .field .icon{ position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:20px; color:var(--muted)}
-    .clear-btn{ position:absolute; right:10px; top:50%; transform:translateY(-50%); border:0; background:transparent; cursor:pointer; font-size:18px; color:var(--muted); }
-    .filters{ display:flex; flex-wrap:wrap; gap:8px }
-    .filters select{ border:1px solid #d1b35e; border-radius:10px; padding:10px 12px; background:#fff; font-size:14px; }
-    .stats{padding:10px 14px; color:var(--muted); font-size:14px}
-    .results{ margin-top:-1%; width:93%}
-    .row{ display:grid; grid-template-columns: 1.2fr 0.8fr 0.7fr 0.5fr 0.6fr; gap:12px; align-items:center; padding:14px 14px; border-bottom:1px dashed #f0e1b6; }
-    .row:nth-child(odd){ background: #fff9e9 }
-    .row.header{ font-weight:700; color:#111; background:#ffeab9; border-top-left-radius:12px; border-top-right-radius:12px; border-bottom:1px solid #f0e1b6 }
-    .center{color:#7a4d00; font-weight:600}
-    .badge{ display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid #d1b35e; font-size:12px; background:#fff }
-    mark{ background: #fff2a8; padding:0 2px; border-radius:3px }
-    .footer{color:var(--muted); font-size:12px; text-align:center; margin:24px 0}
-    .actions{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
-    .btn{ background:var(--accent); color:#fff; border:0; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer }
-    .btn.secondary{ background:#fff; color:var(--accent); border:1px solid var(--accent) }
-    .hide{ display:none !important }
-    .alert{ margin-top:1%; padding:12px; border-radius:10px; border:1px solid #f59e0b; background:#fff7ed; color:#7c2d12; }
+    .container{max-width:1100px;margin:0 auto;padding:16px}
+    header{position:static;background:transparent;border:0;}
+    .card{width:100%;background:var(--card);border:1px solid #ecd39a;border-radius:var(--radius);box-shadow:0 2px 10px rgba(0,0,0,0.04)}
+    .hero-brand{width:100%;padding:16px;display:flex;gap:16px;align-items:center}
+    .hero-brand img{width:72px;height:auto;border-radius:12px;border:1px solid #ecd39a;background:#fff;padding:4px}
+    .searchbar{display:flex;gap:10px;margin:12px 0;flex-wrap:wrap}
+    .field{position:relative;flex:1;min-width:220px}
+    .field input[type="search"]{width:100%;padding:10px 44px;border-radius:12px;border:1px solid #d1b35e;outline:none;font-size:16px;background:#fff}
+    .field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(194,132,2,0.15)}
+    .field .icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:20px;color:var(--muted)}
+    .clear-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);border:0;background:transparent;cursor:pointer;font-size:18px;color:var(--muted)}
+    .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .btn{background:var(--accent);color:#fff;border:0;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer}
+    .btn.secondary{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+
+    .filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+    .filters select,.filters input[type="search"]{
+      border:1px solid #d1b35e;border-radius:10px;padding:10px 12px;background:#fff;font-size:14px
+    }
+    .filters .sala-field{min-width:140px;flex:0 0 180px}
+
+    .stats{padding:10px 4px;color:var(--muted);font-size:14px}
+    .results{margin-top:8px;width:100%}
+    .row{
+      display:grid;grid-template-columns:1.2fr 0.8fr 0.7fr 0.5fr 0.6fr;
+      gap:12px;align-items:center;padding:14px;border-bottom:1px dashed #f0e1b6
+    }
+    .row:nth-child(odd){background:#fff9e9}
+    .row.header{font-weight:700;color:#111;background:#ffeab9;border-top-left-radius:12px;border-top-right-radius:12px;border-bottom:1px solid #f0e1b6}
+    .center{color:#7a4d00;font-weight:600}
+    .badge{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid #d1b35e;font-size:12px;background:#fff}
+    mark{background:#fff2a8;padding:0 2px;border-radius:3px}
+    .footer{color:var(--muted);font-size:12px;text-align:center;margin:24px 0}
+    .alert{margin-top:8px;padding:12px;border-radius:10px;border:1px solid #f59e0b;background:#fff7ed;color:#7c2d12}
+
+    /* MOBILE */
     @media (max-width:800px){
-      .row{ grid-template-columns: 1fr; gap:6px }
-      .row.header{ display:none }
-      .row > div{ display:flex; gap:8px }
-      .row > div::before{ content: attr(data-label); min-width:110px; color:var(--muted) }
-      .searchbar{ flex-direction:column }
-      .filters{ gap:6px }
-      .actions{ width:100% }
-      .actions .btn{ flex:1 }
+      .hero-brand{align-items:flex-start}
+      .searchbar{flex-direction:column}
+      .actions{width:100%}
+      .actions .btn{flex:1}
+      .filters{gap:6px}
+      .row{grid-template-columns:1fr;gap:6px}
+      .row.header{display:none}
+      .row > div{display:flex;gap:8px}
+      .row > div::before{content:attr(data-label);min-width:110px;color:var(--muted)}
     }
   </style>
 </head>
@@ -58,10 +67,10 @@
       <div class="hero-brand card">
         <img src="logo-paroquia.jpg" alt="Paróquia de São Paulo de Luanda" onerror="this.style.display='none'"/>
         <div>
-          <div style="font-weight:800; font-size:18px">Paróquia de São Paulo de Luanda</div>
-          <div style="font-weight:700; color:#6b7280">Secretariado da Catequese</div>
-          <div style="margin-top:6px; font-weight:800; font-size:16px">Lista Final da Catequese 2025/2026</div>
-          <div style="color:#374151; margin-top:2px">Data de Início da Catequese: <strong>1 de Outubro de 2025</strong></div>
+          <div style="font-weight:800;font-size:18px">Paróquia de São Paulo de Luanda</div>
+          <div style="font-weight:700;color:#6b7280">Secretariado da Catequese</div>
+          <div style="margin-top:6px;font-weight:800;font-size:16px">Lista Final da Catequese 2025/2026</div>
+          <div style="color:#374151;margin-top:2px">Data de Início da Catequese: <strong>1 de Outubro de 2025</strong></div>
         </div>
       </div>
 
@@ -81,7 +90,9 @@
         <select id="centroFilter"><option value="">Centro (todos)</option></select>
         <select id="etapaFilter"><option value="">Etapa (todas)</option></select>
         <select id="horarioFilter"><option value="">Horário (todos)</option></select>
-      </div> 
+        <!-- NOVO: pesquisa por número da sala -->
+        <input id="salaSearch" class="sala-field" type="search" inputmode="numeric" pattern="[0-9 ]*" placeholder="Sala (ex.: 305)" />
+      </div>
 
       <div id="warn" class="alert" style="display:none"></div>
       <div class="stats" id="stats">A carregar…</div>
@@ -98,14 +109,14 @@
     const XLSX_URL = 'dados-catequese.xlsx';
     const CSV_URL  = 'dados-catequese.csv';
 
-    const norm = (s) => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
-    const fmtDate = (s) => {
+    const norm = (s)=> (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+    const fmtDate = (s)=>{
       if(!s) return '';
       if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
       const d = new Date(s);
-      if(!isNaN(d)) { const dd=String(d.getDate()).padStart(2,'0'); const mm=String(d.getMonth()+1).padStart(2,'0'); const yy=d.getFullYear(); return `${dd}/${mm}/${yy}`; }
+      if(!isNaN(d)){const dd=String(d.getDate()).padStart(2,'0');const mm=String(d.getMonth()+1).padStart(2,'0');const yy=d.getFullYear();return `${dd}/${mm}/${yy}`;}
       const m = s.match(/^(\d{1,2})[-.](\d{1,2})[-.](\d{4})$/);
-      if(m){ const dd=m[1].padStart(2,'0'); const mm=m[2].padStart(2,'0'); return `${dd}/${mm}/${m[3]}`; }
+      if(m){const dd=m[1].padStart(2,'0');const mm=m[2].padStart(2,'0');return `${dd}/${mm}/${m[3]}`;}
       return s;
     };
     const key = (s)=>norm(s).replace(/[^a-z0-9]/g,'');
@@ -122,17 +133,15 @@
       const idx = {};
       cols.forEach((c,i)=>{
         const k = key(c);
-        for(const [t, aliases] of Object.entries(wanted)){
-          if(aliases.includes(k)) idx[t]=i;
-        }
+        for(const [t, aliases] of Object.entries(wanted)){ if(aliases.includes(k)) idx[t]=i; }
       });
       return idx;
     }
 
     function render(list){
       const results = document.getElementById('results');
-      const stats = document.getElementById('stats');
-      const q = document.getElementById('q');
+      const stats   = document.getElementById('stats');
+      const q       = document.getElementById('q');
       results.innerHTML = '';
       const header = document.createElement('div');
       header.className = 'row header';
@@ -158,17 +167,18 @@
     }
 
     function applySearchFactory(DATA){
-      const q = document.getElementById('q');
+      const q            = document.getElementById('q');
       const centroFilter = document.getElementById('centroFilter');
-      const etapaFilter = document.getElementById('etapaFilter');
-      const horarioFilter = document.getElementById('horarioFilter');
+      const etapaFilter  = document.getElementById('etapaFilter');
+      const horarioFilter= document.getElementById('horarioFilter');
+      const salaSearch   = document.getElementById('salaSearch');
 
       function uniq(arr){ return [...new Set(arr.filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt')); }
 
       function populate(){
         centroFilter.innerHTML = '<option value="">Centro (todos)</option>';
-        etapaFilter.innerHTML = '<option value="">Etapa (todas)</option>';
-        horarioFilter.innerHTML = '<option value="">Horário (todos)</option>';
+        etapaFilter.innerHTML  = '<option value="">Etapa (todas)</option>';
+        horarioFilter.innerHTML= '<option value="">Horário (todos)</option>';
         for(const c of uniq(DATA.map(d=>d.centro))){ const o=document.createElement('option'); o.value=c; o.textContent=c; centroFilter.appendChild(o); }
         for(const e of uniq(DATA.map(d=>d.etapa))){ const o=document.createElement('option'); o.value=e; o.textContent=e; etapaFilter.appendChild(o); }
         for(const h of uniq(DATA.map(d=>d.horario))){ const o=document.createElement('option'); o.value=h; o.textContent=h; horarioFilter.appendChild(o); }
@@ -176,30 +186,38 @@
 
       function apply(){
         const nq = norm(q.value);
-        const fCentro = centroFilter.value;
-        const fEtapa = etapaFilter.value;
+        const salaQ = norm(salaSearch.value);
+        const fCentro  = centroFilter.value;
+        const fEtapa   = etapaFilter.value;
         const fHorario = horarioFilter.value;
+
         let list = DATA;
         if(fCentro)  list = list.filter(d => d.centro === fCentro);
         if(fEtapa)   list = list.filter(d => d.etapa === fEtapa);
         if(fHorario) list = list.filter(d => d.horario === fHorario);
+        if(salaQ)    list = list.filter(d => norm(String(d.sala)).includes(salaQ)); // << pesquisa por sala
         if(nq)       list = list.filter(d => norm(d.nome).includes(nq));
+
         render(list);
       }
 
+      // eventos
       let t;
-      q.addEventListener('input', () => { clearTimeout(t); t = setTimeout(apply, 80); });
-      document.getElementById('clearBtn').addEventListener('click', () => { q.value=''; apply(); q.focus(); });
-      document.getElementById('printBtn').addEventListener('click', () => window.print());
-      document.getElementById('shareBtn').addEventListener('click', async function() {
-        try{ await navigator.clipboard.writeText(location.href); this.textContent='Link copiado!'; setTimeout(()=>this.textContent='Compartilhar pesquisa',1500);}catch(e){ alert('Copie o link da barra de endereços para compartilhar.'); }
+      q.addEventListener('input', ()=>{ clearTimeout(t); t=setTimeout(apply,80); });
+      salaSearch.addEventListener('input', ()=>{ clearTimeout(t); t=setTimeout(apply,80); });
+      document.getElementById('clearBtn').addEventListener('click', ()=>{ q.value=''; apply(); q.focus(); });
+      document.getElementById('printBtn').addEventListener('click', ()=>window.print());
+      document.getElementById('shareBtn').addEventListener('click', async function(){
+        try{ await navigator.clipboard.writeText(location.href); this.textContent='Link copiado!'; setTimeout(()=>this.textContent='Compartilhar pesquisa',1500); }
+        catch(e){ alert('Copie o link da barra de endereços para compartilhar.'); }
       });
       centroFilter.addEventListener('change', apply);
       etapaFilter.addEventListener('change', apply);
       horarioFilter.addEventListener('change', apply);
 
       populate(); apply();
-    } 
+    }
+
     function showWarn(html){
       const w = document.getElementById('warn');
       w.innerHTML = html;
@@ -211,12 +229,7 @@
       const r = await fetch(url);
       if(!r.ok) throw new Error('XLSX fetch HTTP ' + r.status + ' ('+url+')');
       const buf = await r.arrayBuffer();
-      let wb;
-      try{
-        wb = XLSX.read(buf, {type:'array'});
-      }catch(e){
-        throw new Error('XLSX parse error: ' + (e && e.message ? e.message : e));
-      }
+      const wb = XLSX.read(buf, {type:'array'});
       const ws = wb.Sheets[wb.SheetNames[0]];
       const json = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
       if(!json.length) throw new Error('XLSX vazio na 1ª folha.');
@@ -234,32 +247,19 @@
         sala: r[idx.sala] ?? '',
         horario: r[idx.horario] ?? ''
       }));
-      DATA.forEach(d => d.nascimento_fmt = fmtDate(d.nascimento)); 
+      DATA.forEach(d => d.nascimento_fmt = fmtDate(d.nascimento));
       return DATA;
     }
 
     function parseCSV(text){
-      // Parser simples (suporta "aspas", vírgulas e quebras)
-      const rows = [];
-      let i=0, cur='', inQ=false, row=[];
+      const rows=[];let i=0,cur='',inQ=false,row=[];
       while(i<text.length){
-        const ch = text[i];
-        if(inQ){
-          if(ch === '"'){
-            if(text[i+1] === '"'){ cur+='"'; i++; }
-            else inQ=false;
-          }else cur += ch;
-        }else{
-          if(ch === '"'){ inQ=true; }
-          else if(ch === ','){ row.push(cur); cur=''; }
-          else if(ch === '\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
-          else if(ch === '\r'){ /* ignore */ }
-          else cur += ch;
-        }
+        const ch=text[i];
+        if(inQ){ if(ch=='"'){ if(text[i+1]=='"'){cur+='"';i++;} else inQ=false; } else cur+=ch; }
+        else{ if(ch=='"') inQ=true; else if(ch==','){row.push(cur);cur='';} else if(ch=='\n'){row.push(cur);rows.push(row);row=[];cur='';} else if(ch!='\r') cur+=ch; }
         i++;
       }
-      row.push(cur); rows.push(row);
-      return rows;
+      row.push(cur); rows.push(row); return rows;
     }
 
     async function tryCSV(){
@@ -282,7 +282,7 @@
         sala: r[idx.sala] ?? '',
         horario: r[idx.horario] ?? ''
       }));
-      DATA.forEach(d => d.nascimento_fmt = fmtDate(d.nascimento)); 
+      DATA.forEach(d => d.nascimento_fmt = fmtDate(d.nascimento));
       return DATA;
     }
 
@@ -291,12 +291,12 @@
         const data = await tryXLSX();
         applySearchFactory(data);
       }catch(excelErr){
-        // Tenta CSV
         try{
           const data = await tryCSV();
           applySearchFactory(data);
         }catch(csvErr){
           document.getElementById('stats').textContent = 'Falha ao carregar os dados.';
+          showWarn('Não foi possível carregar XLSX nem CSV.');
         }
       }
     })();
