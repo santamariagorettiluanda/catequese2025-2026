@@ -6,14 +6,14 @@
   <title>Lista de Salas — Paróquia de São Paulo de Luanda</title>
   <!-- SheetJS para ler .xlsx -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
-    <style>
+  <style>
     :root{
       --bg:#fffdf6; --card:#ffffff; --ink:#1b1a17; --muted:#6b7280;
       --accent:#c28402; --accent-2:#d39f21; --ok:#16a34a; --warn:#b45309; --radius:16px;
     }
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
-    .container{width:93%;margin:0 auto;padding:24px}
+    .container{max-width:1100px;margin:0 auto;padding:24px}
     header{position:static; background:transparent; border:0;}
     .card{margin:0 auto; margin-top:1%;width:89%;background:var(--card); border:1px solid #ecd39a; border-radius:var(--radius); box-shadow:0 2px 10px rgba(0,0,0,0.04)}
     .hero-brand{width:100%;margin-top:0; padding:18px; display:flex; gap:16px; align-items:center}
@@ -39,6 +39,8 @@
     .btn{ background:var(--accent); color:#fff; border:0; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer }
     .btn.secondary{ background:#fff; color:var(--accent); border:1px solid var(--accent) }
     .hide{ display:none !important }
+    .hint{ font-size:12px; color:var(--muted); padding:0 12px 12px }
+    .alert{ margin-top:1%; padding:12px; border-radius:10px; border:1px solid #f59e0b; background:#fff7ed; color:#7c2d12; }
     @media (max-width:800px){
       .row{ grid-template-columns: 1fr; gap:6px }
       .row.header{ display:none }
@@ -81,6 +83,13 @@
         <select id="etapaFilter"><option value="">Etapa (todas)</option></select>
         <select id="horarioFilter"><option value="">Horário (todos)</option></select>
       </div>
+
+      <div class="hint">
+        Fonte de dados: <b id="srcLabel">a carregar…</b>
+        <span class="badge-src" id="srcBadge"></span>
+      </div>
+
+      <div id="warn" class="alert" style="display:none"></div>
       <div class="stats" id="stats">A carregar…</div>
     </div>
   </header>
@@ -202,6 +211,11 @@
       document.getElementById('srcLabel').textContent = label;
       document.getElementById('srcBadge').textContent = extra;
     }
+    function showWarn(html){
+      const w = document.getElementById('warn');
+      w.innerHTML = html;
+      w.style.display = '';
+    }
 
     async function tryXLSX(){
       const url = XLSX_URL + '?v=' + Date.now();
@@ -294,7 +308,9 @@
         try{
           const data = await tryCSV();
           applySearchFactory(data);
+          showWarn('Carregado via <b>CSV</b> (fallback). Erro do XLSX: <code>'+String(excelErr.message || excelErr)+'</code>');
         }catch(csvErr){
+          showWarn('Falha geral.<br>Erro XLSX: <code>'+String(excelErr.message || excelErr)+'</code><br>Erro CSV: <code>'+String(csvErr.message || csvErr)+'</code><br>Confirme que <code>dados-catequese.xlsx</code> <i>ou</i> <code>dados-catequese.csv</code> estão publicados na raiz do site.');
           document.getElementById('stats').textContent = 'Falha ao carregar os dados.';
         }
       }
