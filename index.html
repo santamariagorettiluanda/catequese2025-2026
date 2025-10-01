@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lista de Salas — Paróquia de São Paulo de Luanda</title>
-  <!-- SheetJS para ler .xlsx via fetch -->
+  <!-- SheetJS para ler .xlsx -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
     <style>
     :root{
@@ -57,8 +57,7 @@
   <header class="card">
     <div class="container">
       <div class="hero-brand card">
-        <!-- opcional: coloque um ficheiro logo-paroquia.jpg ao lado do HTML -->
-        <img id="logo" alt="Paróquia de São Paulo de Luanda" />
+        <img src="logo-paroquia.jpg" alt="Paróquia de São Paulo de Luanda" onerror="this.style.display='none'"/>
         <div>
           <div style="font-weight:800; font-size:18px">Paróquia de São Paulo de Luanda</div>
           <div style="font-weight:700; color:#6b7280">Secretariado da Catequese</div>
@@ -85,11 +84,12 @@
         <select id="horarioFilter"><option value="">Horário (todos)</option></select>
       </div>
 
-      <div class="hint">Dados carregados do ficheiro <b>dados-catequese.xlsx</b> (1ª folha). Atualize-o no servidor para refletir mudanças.</div>
-      <div id="warn" class="alert" style="display:none">
-        Não foi possível carregar o Excel. Se estiver a ver dentro do WhatsApp, toque em <b>“Abrir no navegador”</b>.
-        Confirme que <code>dados-catequese.xlsx</code> está na mesma pasta do HTML.
+      <div class="hint">
+        Fonte de dados: <b id="srcLabel">a carregar…</b>
+        <span class="badge-src" id="srcBadge"></span>
       </div>
+
+      <div id="warn" class="alert" style="display:none"></div>
       <div class="stats" id="stats">A carregar…</div>
     </div>
   </header>
@@ -101,34 +101,37 @@
   <div class="footer">© Paróquia de São Paulo de Luanda — Secretariado da Catequese</div>
 
   <script>
-    // Ajuste aqui se mudar o nome do ficheiro
-    const EXCEL_PATH = 'dados-catequese.xlsx';
-    const LOGO_FILE = 'logo-paroquia.jpg'; // opcional
+    const XLSX_URL = 'dados-catequese.xlsx';
+    const CSV_URL  = 'dados-catequese.csv';
 
     const norm = (s) => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
     const fmtDate = (s) => {
       if(!s) return '';
       if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
       const d = new Date(s);
-      if(!isNaN(d)) { const dd = String(d.getDate()).padStart(2,'0'); const mm = String(d.getMonth()+1).padStart(2,'0'); const yy = d.getFullYear(); return `${dd}/${mm}/${yy}`; }
+      if(!isNaN(d)) { const dd=String(d.getDate()).padStart(2,'0'); const mm=String(d.getMonth()+1).padStart(2,'0'); const yy=d.getFullYear(); return `${dd}/${mm}/${yy}`; }
       const m = s.match(/^(\d{1,2})[-.](\d{1,2})[-.](\d{4})$/);
-      if(m){ const dd = m[1].padStart(2,'0'); const mm = m[2].padStart(2,'0'); return `${dd}/${mm}/${m[3]}`; }
+      if(m){ const dd=m[1].padStart(2,'0'); const mm=m[2].padStart(2,'0'); return `${dd}/${mm}/${m[3]}`; }
       return s;
     };
+    const key = (s)=>norm(s).replace(/[^a-z0-9]/g,'');
 
-    function uniq(arr){ return [...new Set(arr.filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt')); }
     function mapHeaders(cols){
       const wanted = {
-        nome: ['nome','nomecompleto'],
-        nascimento: ['nascimento','datanascimento','data','dn'],
-        centro: ['centro','centrodecatequese','paroquia','comunidade'],
-        etapa: ['etapa','etapacatequese','nivel','ano','classe'],
-        sala: ['sala','numerosala','turma','salaaula'],
-        horario: ['horario','hora','turno','periodo','diaehora','diahora'],
+        nome:['nome','nomecompleto'],
+        nascimento:['nascimento','datanascimento','data','dn'],
+        centro:['centro','centrodecatequese','paroquia','comunidade'],
+        etapa:['etapa','etapacatequese','nivel','ano','classe'],
+        sala:['sala','numerosala','turma','salaaula'],
+        horario:['horario','hora','turno','periodo','diaehora','diahora'],
       };
-      const key = (s)=>norm(s).replace(/[^a-z0-9]/g,'');
       const idx = {};
-      cols.forEach((c,i)=>{ const k = key(c); for(const [t,aliases] of Object.entries(wanted)){ if(aliases.includes(k)) idx[t]=i; } });
+      cols.forEach((c,i)=>{
+        const k = key(c);
+        for(const [t, aliases] of Object.entries(wanted)){
+          if(aliases.includes(k)) idx[t]=i;
+        }
+      });
       return idx;
     }
 
@@ -160,96 +163,158 @@
       stats.textContent = list.length + ' resultado' + (list.length===1?'':'s');
     }
 
-    async function loadLogo(){
-      const img = document.getElementById('logo');
-      try{
-        const res = await fetch(LOGO_FILE, {method:'HEAD'});
-        if(res.ok) img.src = LOGO_FILE; else img.style.display='none';
-      }catch(_){ img.style.display='none'; }
-    }
-
-    async function loadExcel(){
-      const warn = document.getElementById('warn');
-      const stats = document.getElementById('stats');
-      try{
-        const res = await fetch(EXCEL_PATH + '?v=' + Date.now());
-        if(!res.ok) throw new Error('HTTP ' + res.status);
-        const buf = await res.arrayBuffer();
-        const wb = XLSX.read(buf, { type: 'array' });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-        if(!json.length) throw new Error('Planilha vazia');
-        const headers = json[0].map(String);
-        const idx = mapHeaders(headers);
-        const req = ['nome','nascimento','centro','etapa','sala','horario'];
-        const missing = req.filter(k => !(k in idx));
-        if(missing.length) throw new Error('Cabeçalho inválido: ' + headers.join(', '));
-        const rows = json.slice(1).filter(r => r.some(v => String(v).trim() !== ''));
-        window.__CATEQUESE_DATA__ = rows.map(r => ({
-          nome: r[idx.nome] ?? '',
-          nascimento: r[idx.nascimento] ?? '',
-          centro: r[idx.centro] ?? '',
-          etapa: r[idx.etapa] ?? '',
-          sala: r[idx.sala] ?? '',
-          horario: r[idx.horario] ?? ''
-        }));
-        window.__CATEQUESE_DATA__.forEach(d => d.nascimento_fmt = fmtDate(d.nascimento));
-        buildUI();
-      }catch(e){
-        console.error(e);
-        warn.style.display = '';
-        stats.textContent = 'Falha ao carregar os dados.';
-      }
-    }
-
-    function buildUI(){
+    function applySearchFactory(DATA){
       const q = document.getElementById('q');
       const centroFilter = document.getElementById('centroFilter');
       const etapaFilter = document.getElementById('etapaFilter');
       const horarioFilter = document.getElementById('horarioFilter');
-      const shareBtn = document.getElementById('shareBtn');
-      const printBtn = document.getElementById('printBtn');
-      const clearBtn = document.getElementById('clearBtn');
 
-      function populateFilters(){
+      function uniq(arr){ return [...new Set(arr.filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt')); }
+
+      function populate(){
         centroFilter.innerHTML = '<option value="">Centro (todos)</option>';
         etapaFilter.innerHTML = '<option value="">Etapa (todas)</option>';
         horarioFilter.innerHTML = '<option value="">Horário (todos)</option>';
-        for(const c of uniq(window.__CATEQUESE_DATA__.map(d=>d.centro))){ const o=document.createElement('option'); o.value=c; o.textContent=c; centroFilter.appendChild(o); }
-        for(const e of uniq(window.__CATEQUESE_DATA__.map(d=>d.etapa))){ const o=document.createElement('option'); o.value=e; o.textContent=e; etapaFilter.appendChild(o); }
-        for(const h of uniq(window.__CATEQUESE_DATA__.map(d=>d.horario))){ const o=document.createElement('option'); o.value=h; o.textContent=h; horarioFilter.appendChild(o); }
+        for(const c of uniq(DATA.map(d=>d.centro))){ const o=document.createElement('option'); o.value=c; o.textContent=c; centroFilter.appendChild(o); }
+        for(const e of uniq(DATA.map(d=>d.etapa))){ const o=document.createElement('option'); o.value=e; o.textContent=e; etapaFilter.appendChild(o); }
+        for(const h of uniq(DATA.map(d=>d.horario))){ const o=document.createElement('option'); o.value=h; o.textContent=h; horarioFilter.appendChild(o); }
       }
 
-      function applySearch(){
+      function apply(){
         const nq = norm(q.value);
         const fCentro = centroFilter.value;
         const fEtapa = etapaFilter.value;
         const fHorario = horarioFilter.value;
-        let list = window.__CATEQUESE_DATA__;
-        if(fCentro) list = list.filter(d => d.centro === fCentro);
-        if(fEtapa) list = list.filter(d => d.etapa === fEtapa);
+        let list = DATA;
+        if(fCentro)  list = list.filter(d => d.centro === fCentro);
+        if(fEtapa)   list = list.filter(d => d.etapa === fEtapa);
         if(fHorario) list = list.filter(d => d.horario === fHorario);
-        if(nq) list = list.filter(d => norm(d.nome).includes(nq));
+        if(nq)       list = list.filter(d => norm(d.nome).includes(nq));
         render(list);
       }
 
       let t;
-      q.addEventListener('input', () => { clearTimeout(t); t = setTimeout(applySearch, 80); });
-      clearBtn.addEventListener('click', () => { q.value=''; applySearch(); q.focus(); });
-      printBtn.addEventListener('click', () => window.print());
-      shareBtn.addEventListener('click', async () => {
-        try{ await navigator.clipboard.writeText(location.href); shareBtn.textContent='Link copiado!'; setTimeout(()=>shareBtn.textContent='Compartilhar pesquisa',1500);}catch(e){ alert('Copie o link da barra de endereços para compartilhar.'); }
+      q.addEventListener('input', () => { clearTimeout(t); t = setTimeout(apply, 80); });
+      document.getElementById('clearBtn').addEventListener('click', () => { q.value=''; apply(); q.focus(); });
+      document.getElementById('printBtn').addEventListener('click', () => window.print());
+      document.getElementById('shareBtn').addEventListener('click', async function() {
+        try{ await navigator.clipboard.writeText(location.href); this.textContent='Link copiado!'; setTimeout(()=>this.textContent='Compartilhar pesquisa',1500);}catch(e){ alert('Copie o link da barra de endereços para compartilhar.'); }
       });
-      centroFilter.addEventListener('change', applySearch);
-      etapaFilter.addEventListener('change', applySearch);
-      horarioFilter.addEventListener('change', applySearch);
+      centroFilter.addEventListener('change', apply);
+      etapaFilter.addEventListener('change', apply);
+      horarioFilter.addEventListener('change', apply);
 
-      populateFilters();
-      applySearch();
+      populate(); apply();
     }
 
-    loadLogo();
-    loadExcel();
+    function setSource(label, extra=''){
+      document.getElementById('srcLabel').textContent = label;
+      document.getElementById('srcBadge').textContent = extra;
+    }
+    function showWarn(html){
+      const w = document.getElementById('warn');
+      w.innerHTML = html;
+      w.style.display = '';
+    }
+
+    async function tryXLSX(){
+      const url = XLSX_URL + '?v=' + Date.now();
+      const r = await fetch(url);
+      if(!r.ok) throw new Error('XLSX fetch HTTP ' + r.status + ' ('+url+')');
+      const buf = await r.arrayBuffer();
+      let wb;
+      try{
+        wb = XLSX.read(buf, {type:'array'});
+      }catch(e){
+        throw new Error('XLSX parse error: ' + (e && e.message ? e.message : e));
+      }
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      if(!json.length) throw new Error('XLSX vazio na 1ª folha.');
+      const headers = json[0].map(String);
+      const idx = mapHeaders(headers);
+      const req = ['nome','nascimento','centro','etapa','sala','horario'];
+      const missing = req.filter(k => !(k in idx));
+      if(missing.length) throw new Error('Cabeçalho inválido XLSX: ' + headers.join(', '));
+      const rows = json.slice(1).filter(r => r.some(v => String(v).trim() !== ''));
+      const DATA = rows.map(r => ({
+        nome: r[idx.nome] ?? '',
+        nascimento: r[idx.nascimento] ?? '',
+        centro: r[idx.centro] ?? '',
+        etapa: r[idx.etapa] ?? '',
+        sala: r[idx.sala] ?? '',
+        horario: r[idx.horario] ?? ''
+      }));
+      DATA.forEach(d => d.nascimento_fmt = fmtDate(d.nascimento));
+      setSource('dados-catequese.xlsx', 'XLSX');
+      return DATA;
+    }
+
+    function parseCSV(text){
+      // Parser simples (suporta "aspas", vírgulas e quebras)
+      const rows = [];
+      let i=0, cur='', inQ=false, row=[];
+      while(i<text.length){
+        const ch = text[i];
+        if(inQ){
+          if(ch === '"'){
+            if(text[i+1] === '"'){ cur+='"'; i++; }
+            else inQ=false;
+          }else cur += ch;
+        }else{
+          if(ch === '"'){ inQ=true; }
+          else if(ch === ','){ row.push(cur); cur=''; }
+          else if(ch === '\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
+          else if(ch === '\r'){ /* ignore */ }
+          else cur += ch;
+        }
+        i++;
+      }
+      row.push(cur); rows.push(row);
+      return rows;
+    }
+
+    async function tryCSV(){
+      const url = CSV_URL + '?v=' + Date.now();
+      const r = await fetch(url);
+      if(!r.ok) throw new Error('CSV fetch HTTP ' + r.status + ' ('+url+')');
+      const txt = await r.text();
+      const table = parseCSV(txt).filter(r => r.some(v => String(v).trim()!==''));
+      if(!table.length) throw new Error('CSV vazio.');
+      const headers = table[0].map(String);
+      const idx = mapHeaders(headers);
+      const req = ['nome','nascimento','centro','etapa','sala','horario'];
+      const missing = req.filter(k => !(k in idx));
+      if(missing.length) throw new Error('Cabeçalho inválido CSV: ' + headers.join(', '));
+      const DATA = table.slice(1).map(r => ({
+        nome: r[idx.nome] ?? '',
+        nascimento: r[idx.nascimento] ?? '',
+        centro: r[idx.centro] ?? '',
+        etapa: r[idx.etapa] ?? '',
+        sala: r[idx.sala] ?? '',
+        horario: r[idx.horario] ?? ''
+      }));
+      DATA.forEach(d => d.nascimento_fmt = fmtDate(d.nascimento));
+      setSource('dados-catequese.csv', 'CSV');
+      return DATA;
+    }
+
+    (async ()=>{
+      try{
+        const data = await tryXLSX();
+        applySearchFactory(data);
+      }catch(excelErr){
+        // Tenta CSV
+        try{
+          const data = await tryCSV();
+          applySearchFactory(data);
+          showWarn('Carregado via <b>CSV</b> (fallback). Erro do XLSX: <code>'+String(excelErr.message || excelErr)+'</code>');
+        }catch(csvErr){
+          showWarn('Falha geral.<br>Erro XLSX: <code>'+String(excelErr.message || excelErr)+'</code><br>Erro CSV: <code>'+String(csvErr.message || csvErr)+'</code><br>Confirme que <code>dados-catequese.xlsx</code> <i>ou</i> <code>dados-catequese.csv</code> estão publicados na raiz do site.');
+          document.getElementById('stats').textContent = 'Falha ao carregar os dados.';
+        }
+      }
+    })();
   </script>
 </body>
 </html>
