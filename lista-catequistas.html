@@ -54,7 +54,7 @@
     .modal{background:#fff;border-radius:16px;max-width:900px;width:100%;max-height:85vh;box-shadow:0 10px 30px rgba(0,0,0,.25);border:1px solid var(--border);display:flex;flex-direction:column}
     .modal header{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--border);padding:14px 16px;z-index:2}
     .modal .title{font-weight:800}
-    .modal .subtitle{color:var(--muted);font-size:14px;margin-top:4px}
+    .modal .subtitle{color:#6b7280;font-size:14px;margin-top:4px}
     .modal .close{background:#fff;border:1px solid #ddd;border-radius:10px;padding:6px 10px;cursor:pointer;float:right}
     .m-body{padding:8px 16px 16px;display:flex;flex-direction:column;gap:8px}
     .m-table{border:1px solid #eee;border-radius:12px;overflow:hidden}
@@ -63,7 +63,7 @@
     .m-row{display:grid;grid-template-columns:1.4fr 0.6fr;gap:12px;padding:10px 12px;border-bottom:1px dashed #eee;background:#fff}
     .m-row:nth-child(odd){background:#fffbf0}
 
-    /* === FIX UNIVERSAL iOS === */
+    /* iOS fix */
     html { -webkit-text-size-adjust: 100%; }
     input, select, textarea, button { font-size:16px !important; max-width:100%; box-sizing:border-box; }
 
@@ -175,7 +175,7 @@
 
     function uniq(arr){ return [...new Set(arr.filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt')); }
 
-    // Constrói grupos (catequista, centro, etapa, sala, horario)
+    // monta grupos (catequista, centro, etapa, sala, horario)
     function buildGroups(DATA){
       const groups = new Map();
       for(const d of DATA){
@@ -228,7 +228,6 @@
       }
       results.appendChild(frag);
 
-      // bind modal openers
       results.querySelectorAll('button[data-open="modal"]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
           const k = decodeURIComponent(btn.getAttribute('data-key'));
@@ -248,7 +247,7 @@
       title.textContent = `Turma de ${group.catequista}`;
       sub.textContent = `${group.centro} • ${group.etapa} • Sala ${group.sala} • ${group.horario}`;
 
-      rowsWrap.innerHTML = ''; // limpa
+      rowsWrap.innerHTML = '';
       const frag = document.createDocumentFragment();
       for(const a of group.alunos){
         const r = document.createElement('div');
@@ -273,34 +272,94 @@
 
     document.getElementById('printBtn').addEventListener('click', ()=>window.print());
 
-    // variáveis para export e estatísticas dinâmicas
     let CURRENT_GROUPS = [];
     let CURRENT_FILTERED = [];
 
     function updateStats(filtered){
-      // total de turmas
       const totalTurmas = filtered.length;
-      // total de catequistas únicos
       const uniqueCats = new Set(filtered.map(g => g.catequista)).size;
       document.getElementById('stats').textContent =
         `${totalTurmas} turma${totalTurmas===1?'':'s'} | ${uniqueCats} catequista${uniqueCats===1?'':'s'}`;
     }
 
+    // ========= Helpers de export com cabeçalho institucional =========
+    function nowStamp(){
+      const d = new Date();
+      const dd = String(d.getDate()).padStart(2,'0');
+      const mm = String(d.getMonth()+1).padStart(2,'0');
+      const yy = d.getFullYear();
+      const hh = String(d.getHours()).padStart(2,'0');
+      const mi = String(d.getMinutes()).padStart(2,'0');
+      return `${dd}/${mm}/${yy} ${hh}:${mi}`;
+    }
+
+    function makeSheetWithHeader(tableHeader, bodyRows, sheetTitle, colWidths){
+      const colsCount = tableHeader.length;
+
+      // Bloco de cabeçalho (2 linhas vazias para logo + 4 linhas de texto + 1 vazia)
+      const headerBlock = [
+        [],                                // espaço para logo (linha 1)
+        [],                                // espaço para logo (linha 2)
+        ['Paróquia de São Paulo de Luanda'],
+        ['Secretariado da Catequese'],
+        [sheetTitle],
+        ['Data de geração: ' + nowStamp()],
+        []                                 // linha vazia antes da tabela
+      ];
+
+      const aoa = [...headerBlock, tableHeader, ...bodyRows];
+      const ws  = XLSX.utils.aoa_to_sheet(aoa);
+
+      // Mesclar as linhas de texto do cabeçalho para atravessar todas as colunas (A..last)
+      const lastColIdx = colsCount - 1;
+      const merges = [2,3,4,5].map(r => ({ s:{r:r, c:0}, e:{r:r, c:lastColIdx} })); // linhas 3..6 (0-based)
+      ws['!merges'] = merges;
+
+      // Largura das colunas
+      ws['!cols'] = colWidths.map(w => ({ wch: w }));
+
+      // AutoFiltro iniciando na linha do cabeçalho da TABELA
+      const headerRowNum = headerBlock.length + 1; // 1-based
+      const lastRowNum   = aoa.length;
+      const lastColA1    = XLSX.utils.encode_col(lastColIdx);
+      ws['!autofilter']  = { ref: `A${headerRowNum}:${lastColA1}${lastRowNum}` };
+
+      return ws;
+    }
+    // =================================================================
+
+    // ====== EXPORT XLSX (2 folhas com cabeçalho em cada) ======
     function exportXLSX(filtered){
-      const rows = filtered.map(g => ({
-        Catequista: g.catequista,
-        Centro: g.centro,
-        Etapa: g.etapa,
-        Sala: g.sala,
-        Horario: g.horario,
-        Catecumenos: g.alunos.length
-      }));
-      const ws = XLSX.utils.json_to_sheet(rows);
+      // Folha 1 — Resumo
+      const headerResumo = ['Catequista','Centro','Etapa','Sala','Horario','Catecumenos'];
+      const bodyResumo   = filtered.map(g => [g.catequista, g.centro, g.etapa, g.sala, g.horario, g.alunos.length]);
+      const wsResumo     = makeSheetWithHeader(headerResumo, bodyResumo, 'Lista de Catequistas — Ano Catequético 2025/2026', [28,18,14,8,14,12]);
+
+      // Folha 2 — Detalhe
+      const headerDet = ['Centro','Etapa','Sala','Horario','Catequista','Nome','Nascimento'];
+      const bodyDet = [];
+      for(const g of filtered){
+        for(const a of g.alunos){
+          bodyDet.push([g.centro, g.etapa, g.sala, g.horario, g.catequista, a.nome, a.nascimento_fmt || '']);
+        }
+      }
+      bodyDet.sort((x,y)=>
+        x[0].localeCompare(y[0],'pt') ||
+        x[1].localeCompare(y[1],'pt') ||
+        String(x[2]).localeCompare(String(y[2]),'pt') ||
+        x[4].localeCompare(y[4],'pt') ||
+        x[5].localeCompare(y[5],'pt')
+      );
+      const wsDetalhe = makeSheetWithHeader(headerDet, bodyDet, 'Lista de Catequistas — Ano Catequético 2025/2026 (Detalhe)', [18,14,8,14,22,28,12]);
+
+      // Cria e salva
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Catequistas');
+      XLSX.utils.book_append_sheet(wb, wsResumo, 'Catequistas');
+      XLSX.utils.book_append_sheet(wb, wsDetalhe, 'Detalhe');
       XLSX.writeFile(wb, 'catequistas_filtrado.xlsx');
     }
     document.getElementById('exportBtn').addEventListener('click', ()=>exportXLSX(CURRENT_FILTERED));
+    // =========================================================
 
     function applySearchFactory(GROUPS){
       const centroFilter = document.getElementById('centroFilter');
