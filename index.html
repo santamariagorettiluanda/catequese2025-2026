@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lista de Salas — Paróquia de São Paulo de Luanda</title>
 
-  <!-- SheetJS (versão UMD compatível com iOS) -->
+  <!-- SheetJS (UMD compatível com iOS) -->
   <script defer src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
 
   <style>
@@ -21,6 +21,7 @@
     .card{width:100%;box-shadow:-1px 9px 8px 0px rgba(0, 0, 0, 0.08)}
     .hero-brand{width:100%;padding:16px;display:flex;gap:16px;align-items:center}
     .hero-brand img{width:72px;height:auto;border-radius:12px;border:1px solid #ecd39a;background:#fff;padding:4px}
+
     .searchbar{display:flex;gap:10px;margin:12px 0;flex-wrap:wrap}
     .field{position:relative;flex:1;min-width:220px}
     .field input[type="search"]{width:100%;padding:10px 44px;border-radius:12px;
@@ -38,12 +39,14 @@
       border:1px solid #d1b35e;border-radius:10px;padding:10px 12px;background:#fff;font-size:16px
     }
     .filters .sala-field{min-width:140px;flex:0 0 180px}
+    .filters .cateq-field{min-width:200px;flex:1}
 
     .stats{padding:10px 4px;color:var(--muted);font-size:14px}
     .results{margin-top:8px;width:100%;overflow-x:hidden}
     .row{
       display:grid;
-      grid-template-columns:1.2fr 0.7fr 0.8fr 0.7fr 0.5fr 0.6fr;
+      /* agora com 8 colunas: Nascimento, Centro, Etapa, Sala, Horário, Catequistas, Resultado */
+      grid-template-columns:1.2fr 0.7fr 0.8fr 0.7fr 0.5fr 0.7fr 1fr 0.7fr;
       gap:12px;align-items:center;padding:14px;border-bottom:1px dashed #f0e1b6;
       word-break:break-word;
     }
@@ -55,17 +58,14 @@
     .row > div{overflow:hidden;text-overflow:ellipsis;min-width:0}
     .center{color:#7a4d00;font-weight:600}
     .badge{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid #d1b35e;font-size:12px;background:#fff}
-    mark{background:#fff2a8;padding:0 2px;border-radius:3px}
+    .tag{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid #d1b35e;font-size:12px;background:#fff}
     .footer{color:var(--muted);font-size:12px;text-align:center;margin:24px 0}
     .alert{margin-top:8px;padding:12px;border-radius:10px;border:1px solid #f59e0b;background:#fff7ed;color:#7c2d12}
+    mark{background:#fff2a8;padding:0 2px;border-radius:3px}
 
-    /* === FIX UNIVERSAL iOS (impede zoom automático e overflow lateral) === */
+    /* === FIX UNIVERSAL iOS: impede zoom e overflow em inputs === */
     html { -webkit-text-size-adjust: 100%; }
-    input, select, textarea, button {
-      font-size:16px !important;
-      max-width:100%;
-      box-sizing:border-box;
-    }
+    input, select, textarea, button { font-size:16px !important; max-width:100%; box-sizing:border-box; }
 
     /* MOBILE */
     @media (max-width:800px){
@@ -83,7 +83,7 @@
         font-weight:600;
         color:var(--muted);
       }
-      .badge{font-size:13px;padding:4px 8px}
+      .badge,.tag{font-size:13px;padding:4px 8px}
     }
   </style>
 </head>
@@ -116,7 +116,9 @@
         <select id="centroFilter"><option value="">Centro (todos)</option></select>
         <select id="etapaFilter"><option value="">Etapa (todas)</option></select>
         <select id="horarioFilter"><option value="">Horário (todos)</option></select>
+        <select id="resultadoFilter"><option value="">Resultado (todos)</option></select>
         <input id="salaSearch" class="sala-field" type="search" inputmode="numeric" pattern="[0-9 ]*" placeholder="Sala (ex.: 305)" />
+        <input id="catequistaSearch" class="cateq-field" type="search" placeholder="Catequistas (ex.: Franklin)" />
       </div>
 
       <div id="warn" class="alert" style="display:none"></div>
@@ -132,7 +134,6 @@
 
   <script>
     const XLSX_URL = 'dados-catequese.xlsx';
-    const CSV_URL  = 'dados-catequese.csv';
 
     const norm = (s)=> (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
     const fmtDate = (s)=>{
@@ -154,6 +155,8 @@
         etapa:['etapa','etapacatequese','nivel','ano','classe'],
         sala:['sala','numerosala','turma','salaaula'],
         horario:['horario','hora','turno','periodo','diaehora','diahora'],
+        catequistas:['catequistas','catequista','responsaveis','responsavel'],
+        resultado:['resultado','situacao','status']
       };
       const idx = {};
       cols.forEach((c,i)=>{
@@ -163,105 +166,218 @@
       return idx;
     }
 
-    function render(list){
+    /* Lê cores da sheet 'tabelas' -> tabela 'tiposresultados' (id,nome,cor) */
+    function getResultadoColors(wb){
+      const defaults = {
+        'aprovado':'#16a34a',
+        'reprovado':'#dc2626',
+        'desistente':'#6b7280',
+        'transferido':'#2563eb'
+      };
+      const ws = wb.Sheets['tabelas'];
+      if(!ws) return defaults;
+
+      const table = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      if(!table.length) return defaults;
+
+      // procurar cabeçalho com id/nome/cor
+      let hRow = -1, col = {};
+      for(let r=0;r<table.length;r++){
+        const row = table[r].map(v => String(v).trim().toLowerCase());
+        if(row.includes('id') && row.includes('nome') && row.includes('cor')){
+          hRow = r;
+          col = {
+            id: row.indexOf('id'),
+            nome: row.indexOf('nome'),
+            cor: row.indexOf('cor')
+          };
+          break;
+        }
+      }
+      if(hRow < 0) return defaults;
+
+      const colors = {...defaults};
+      // varremos linhas seguintes até ficar tudo vazio
+      for(let r=hRow+1; r<table.length; r++){
+        const raw = table[r] || [];
+        const nome = String(raw[col.nome]||'').trim();
+        if(!nome) continue;
+
+        // 1) se a célula 'cor' tem um valor textual (#RRGGBB), usa-o
+        let colorText = String(raw[col.cor]||'').trim();
+        let color = '';
+        if(/^#?[0-9a-f]{6}$/i.test(colorText)){
+          color = colorText.startsWith('#') ? colorText : ('#'+colorText);
+        }else{
+          // 2) tentar ler a cor de preenchimento da célula (se estilo estiver disponível)
+          try{
+            const addr = XLSX.utils.encode_cell({ r: r, c: col.cor }); // r/c 0-based em relação ao topo da sheet
+            const cell = ws[addr];
+            const fg = cell && cell.s && cell.s.fgColor && (cell.s.fgColor.rgb || cell.s.fgColor.theme);
+            if(fg && typeof fg === 'string'){
+              // fg RGB vem como "FF00FF00" (ARGB). Tirar alpha se vier 8 dígitos.
+              color = fg.length === 8 ? ('#'+fg.slice(2)) : (fg.startsWith('#') ? fg : '#'+fg);
+            }
+          }catch(e){ /* ignora e cai no fallback */ }
+        }
+
+        const keyNome = nome.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+        if(color){
+          colors[keyNome] = color;
+        }else{
+          // mantém defaults caso não tenha conseguido
+          if(!(keyNome in colors)) colors[keyNome] = defaults[keyNome] || '#6b7280';
+        }
+      }
+      return colors;
+    }
+
+    function render(list, colorMap){
       const results = document.getElementById('results');
       const stats   = document.getElementById('stats');
       const q       = document.getElementById('q');
+      const cateqQ  = document.getElementById('catequistaSearch').value;
+
       results.innerHTML = '';
       const header = document.createElement('div');
       header.className = 'row header';
-      header.innerHTML = `<div>Nome</div><div>Nascimento</div><div>Centro</div><div>Etapa</div><div>Sala</div><div>Horário</div>`;
+      header.innerHTML = `<div>Nome</div><div>Nascimento</div><div>Centro</div><div>Etapa</div><div>Sala</div><div>Horário</div><div>Catequistas</div><div>Resultado</div>`;
       results.appendChild(header);
+
       const frag = document.createDocumentFragment();
       for(const d of list){
-        const row = document.createElement('div');
-        row.className='row';
         const nq = norm(q.value);
         const idx = norm(d.nome).indexOf(nq);
         const nomeHTML = (idx>=0 && nq) ? d.nome.slice(0,idx)+'<mark>'+d.nome.slice(idx,idx+nq.length)+'</mark>'+d.nome.slice(idx+nq.length) : d.nome;
+
+        const resKey = norm(d.resultado);
+        const color  = colorMap[resKey] || '#6b7280';
+        const style  = `background:${color}20;border-color:${color};color:${color}`;
+
+        const row = document.createElement('div');
+        row.className='row';
         row.innerHTML = `
           <div data-label="Nome">${nomeHTML}</div>
           <div data-label="Nascimento">${d.nascimento_fmt || '-'}</div>
           <div data-label="Centro" class="center">${d.centro}</div>
           <div data-label="Etapa"><span class="badge">${d.etapa}</span></div>
           <div data-label="Sala"><span class="badge">${d.sala}</span></div>
-          <div data-label="Horário">${d.horario}</div>`;
+          <div data-label="Horário">${d.horario}</div>
+          <div data-label="Catequistas">${d.catequistas || '-'}</div>
+          <div data-label="Resultado"><span class="tag" style="${style}">${d.resultado || '-'}</span></div>`;
         frag.appendChild(row);
       }
       results.appendChild(frag);
       stats.textContent = list.length + ' resultado' + (list.length===1?'':'s');
     }
 
-    function applySearchFactory(DATA){
-      const q=document.getElementById('q'),
-            centroFilter=document.getElementById('centroFilter'),
-            etapaFilter=document.getElementById('etapaFilter'),
-            horarioFilter=document.getElementById('horarioFilter'),
-            salaSearch=document.getElementById('salaSearch');
+    function applySearchFactory(DATA, colorMap){
+      const q            = document.getElementById('q');
+      const centroFilter = document.getElementById('centroFilter');
+      const etapaFilter  = document.getElementById('etapaFilter');
+      const horarioFilter= document.getElementById('horarioFilter');
+      const resultadoFilter = document.getElementById('resultadoFilter');
+      const salaSearch   = document.getElementById('salaSearch');
+      const cateqSearch  = document.getElementById('catequistaSearch');
 
-      function uniq(arr){return [...new Set(arr.filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt'));}
+      function uniq(arr){ return [...new Set(arr.filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt')); }
 
       function populate(){
-        centroFilter.innerHTML='<option value="">Centro (todos)</option>';
-        etapaFilter.innerHTML='<option value="">Etapa (todas)</option>';
-        horarioFilter.innerHTML='<option value="">Horário (todos)</option>';
-        for(const c of uniq(DATA.map(d=>d.centro))){const o=document.createElement('option');o.value=c;o.textContent=c;centroFilter.appendChild(o);}
-        for(const e of uniq(DATA.map(d=>d.etapa))){const o=document.createElement('option');o.value=e;o.textContent=e;etapaFilter.appendChild(o);}
-        for(const h of uniq(DATA.map(d=>d.horario))){const o=document.createElement('option');o.value=h;o.textContent=h;horarioFilter.appendChild(o);}
+        centroFilter.innerHTML = '<option value="">Centro (todos)</option>';
+        etapaFilter.innerHTML  = '<option value="">Etapa (todas)</option>';
+        horarioFilter.innerHTML= '<option value="">Horário (todos)</option>';
+        resultadoFilter.innerHTML= '<option value="">Resultado (todos)</option>';
+        for(const c of uniq(DATA.map(d=>d.centro))){ const o=document.createElement('option'); o.value=c; o.textContent=c; centroFilter.appendChild(o); }
+        for(const e of uniq(DATA.map(d=>d.etapa))){ const o=document.createElement('option'); o.value=e; o.textContent=e; etapaFilter.appendChild(o); }
+        for(const h of uniq(DATA.map(d=>d.horario))){ const o=document.createElement('option'); o.value=h; o.textContent=h; horarioFilter.appendChild(o); }
+        for(const r of uniq(DATA.map(d=>d.resultado))){ const o=document.createElement('option'); o.value=r; o.textContent=r; resultadoFilter.appendChild(o); }
       }
 
       function apply(){
-        const nq=norm(q.value), salaQ=norm(salaSearch.value),
-              fCentro=centroFilter.value, fEtapa=etapaFilter.value, fHorario=horarioFilter.value;
-        let list=DATA;
-        if(fCentro)list=list.filter(d=>d.centro===fCentro);
-        if(fEtapa)list=list.filter(d=>d.etapa===fEtapa);
-        if(fHorario)list=list.filter(d=>d.horario===fHorario);
-        if(salaQ)list=list.filter(d=>norm(String(d.sala)).includes(salaQ));
-        if(nq)list=list.filter(d=>norm(d.nome).includes(nq));
-        render(list);
+        const nq = norm(q.value);
+        const salaQ = norm(salaSearch.value);
+        const cateqQ = norm(cateqSearch.value);
+        const fCentro  = centroFilter.value;
+        const fEtapa   = etapaFilter.value;
+        const fHorario = horarioFilter.value;
+        const fResultado = resultadoFilter.value;
+
+        let list = DATA;
+        if(fCentro)    list = list.filter(d => d.centro === fCentro);
+        if(fEtapa)     list = list.filter(d => d.etapa === fEtapa);
+        if(fHorario)   list = list.filter(d => d.horario === fHorario);
+        if(fResultado) list = list.filter(d => d.resultado === fResultado);
+        if(salaQ)      list = list.filter(d => norm(String(d.sala)).includes(salaQ));
+        if(cateqQ)     list = list.filter(d => norm(String(d.catequistas)).includes(cateqQ));
+        if(nq)         list = list.filter(d => norm(d.nome).includes(nq));
+
+        render(list, colorMap);
       }
 
       let t;
-      q.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(apply,80);});
-      salaSearch.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(apply,80);});
-      document.getElementById('clearBtn').addEventListener('click',()=>{q.value='';apply();q.focus();});
-      document.getElementById('printBtn').addEventListener('click',()=>window.print());
-      document.getElementById('shareBtn').addEventListener('click',async function(){
-        try{await navigator.clipboard.writeText(location.href);
-          this.textContent='Link copiado!';setTimeout(()=>this.textContent='Compartilhar pesquisa',1500);}
-        catch(e){alert('Copie o link da barra de endereços para compartilhar.');}});
-      centroFilter.addEventListener('change',apply);
-      etapaFilter.addEventListener('change',apply);
-      horarioFilter.addEventListener('change',apply);
+      function debounceApply(){ clearTimeout(t); t = setTimeout(apply, 80); }
 
-      populate();apply();
+      q.addEventListener('input', debounceApply);
+      salaSearch.addEventListener('input', debounceApply);
+      cateqSearch.addEventListener('input', debounceApply);
+      document.getElementById('clearBtn').addEventListener('click', ()=>{ q.value=''; apply(); q.focus(); });
+      document.getElementById('printBtn').addEventListener('click', ()=>window.print());
+      document.getElementById('shareBtn').addEventListener('click', async function(){
+        try{ await navigator.clipboard.writeText(location.href);
+             this.textContent='Link copiado!'; setTimeout(()=>this.textContent='Compartilhar pesquisa',1500); }
+        catch(e){ alert('Copie o link da barra de endereços para compartilhar.'); }
+      });
+      centroFilter.addEventListener('change', apply);
+      etapaFilter.addEventListener('change', apply);
+      horarioFilter.addEventListener('change', apply);
+      resultadoFilter.addEventListener('change', apply);
+
+      populate(); apply();
     }
 
-    async function tryXLSX(){
-      const url=XLSX_URL+'?v='+Date.now();
-      const r=await fetch(url);
-      if(!r.ok)throw new Error('XLSX fetch HTTP '+r.status+' ('+url+')');
-      const buf=await r.arrayBuffer();
-      const wb=XLSX.read(buf,{type:'array'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const json=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-      if(!json.length)throw new Error('XLSX vazio');
-      const headers=json[0].map(String);
-      const idx=mapHeaders(headers);
-      const DATA=json.slice(1).filter(r=>r.some(v=>String(v).trim()!==''))
-        .map(r=>({nome:r[idx.nome]??'',nascimento:r[idx.nascimento]??'',centro:r[idx.centro]??'',
-                  etapa:r[idx.etapa]??'',sala:r[idx.sala]??'',horario:r[idx.horario]??''}));
-      DATA.forEach(d=>d.nascimento_fmt=fmtDate(d.nascimento));
-      return DATA;
+    async function load(){
+      const url = XLSX_URL + '?v=' + Date.now();
+      const r = await fetch(url);
+      if(!r.ok) throw new Error('XLSX fetch HTTP ' + r.status);
+      const buf = await r.arrayBuffer();
+      const wb  = XLSX.read(buf, {type:'array'});
+
+      // Sheet principal (1ª folha)
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      if(!json.length) throw new Error('XLSX vazio na 1ª folha.');
+      const headers = json[0].map(String);
+      const idx = mapHeaders(headers);
+      const req = ['nome','nascimento','centro','etapa','sala','horario','catequistas','resultado'];
+      const missing = req.filter(k => !(k in idx));
+      if(missing.length) throw new Error('Cabeçalhos ausentes: ' + missing.join(', '));
+
+      const rows = json.slice(1).filter(r => r.some(v => String(v).trim() !== ''));
+      const DATA = rows.map(r => ({
+        nome: r[idx.nome] ?? '',
+        nascimento: r[idx.nascimento] ?? '',
+        centro: r[idx.centro] ?? '',
+        etapa: r[idx.etapa] ?? '',
+        sala: r[idx.sala] ?? '',
+        horario: r[idx.horario] ?? '',
+        catequistas: r[idx.catequistas] ?? '',
+        resultado: r[idx.resultado] ?? ''
+      }));
+      DATA.forEach(d => d.nascimento_fmt = fmtDate(d.nascimento));
+
+      // Cores de resultado pela sheet 'tabelas' (com fallback)
+      const colorMap = getResultadoColors(wb);
+
+      applySearchFactory(DATA, colorMap);
     }
 
-    (async()=>{
-      try{applySearchFactory(await tryXLSX());}
-      catch(excelErr){
-        document.getElementById('stats').textContent='Falha ao carregar os dados.';
-        const w=document.getElementById('warn');
-        w.textContent='Não foi possível carregar o Excel.';w.style.display='';
+    (async ()=>{
+      try{ await load(); }
+      catch(err){
+        document.getElementById('stats').textContent = 'Falha ao carregar os dados.';
+        const w = document.getElementById('warn');
+        w.textContent = 'Não foi possível carregar o Excel: ' + (err && err.message ? err.message : err);
+        w.style.display = '';
       }
     })();
   </script>
