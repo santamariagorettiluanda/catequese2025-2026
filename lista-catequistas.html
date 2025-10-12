@@ -142,7 +142,7 @@
 
   <script>
     const XLSX_URL = 'dados-catequese.xlsx';
-    const TEMPLATE_URL = 'template-export.xlsx'; // <- teu template com logotipo e marcadores
+    const TEMPLATE_URL = 'template-export.xlsx'; // arquivo modelo com logotipo e tabelas nomeadas
 
     const norm = (s)=> (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
     const fmtDate = (s)=>{
@@ -283,7 +283,42 @@
         `${totalTurmas} turma${totalTurmas===1?'':'s'} | ${uniqueCats} catequista${uniqueCats===1?'':'s'}`;
     }
 
-    // ========= Helpers Export com TEMPLATE =========
+    // ===================== EXPORT COM TEMPLATE =====================
+
+    // devolve worksheet e range inicial de uma TABELA nomeada
+    function getNamedRange(wb, name) {
+      const namesArr = (wb.Workbook && wb.Workbook.Names) ? wb.Workbook.Names : [];
+      const definedName = namesArr.find(n => n.Name === name);
+      if (!definedName) throw new Error(`Nome '${name}' não encontrado no template.`);
+      // Ref ex.: 'Catequistas'!$B$8:$G$8
+      const [sheetNameRaw, rangeRaw] = definedName.Ref.split('!');
+      const sheetName = sheetNameRaw.replace(/^'/,'').replace(/'$/,'');
+      const range = rangeRaw;
+      const ws = wb.Sheets[sheetName];
+      if (!ws) throw new Error(`Folha '${sheetName}' não encontrada para '${name}'.`);
+      const decoded = XLSX.utils.decode_range(range);
+      return { ws, sheetName, startR: decoded.s.r, startC: decoded.s.c };
+    }
+
+    // escreve matriz AOA a partir de (startR,startC)
+    function writeAOA(ws, aoa, startR, startC) {
+      const rows = aoa.length;
+      const cols = aoa[0] ? aoa[0].length : 0;
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+          const addr = XLSX.utils.encode_cell({ r: startR + i, c: startC + j });
+          ws[addr] = { t: 's', v: aoa[i][j] == null ? '' : String(aoa[i][j]) };
+        }
+      }
+      // atualizar !ref para garantir que o Excel reconheça a área
+      const old = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
+      const newRange = {
+        s: { r: Math.min(old.s.r, startR), c: Math.min(old.s.c, startC) },
+        e: { r: Math.max(old.e.r, startR + rows - 1), c: Math.max(old.e.c, startC + cols - 1) }
+      };
+      ws['!ref'] = XLSX.utils.encode_range(newRange);
+    }
+
     function nowStamp(){
       const d = new Date();
       const dd = String(d.getDate()).padStart(2,'0');
@@ -294,123 +329,84 @@
       return `${dd}/${mm}/${yy} ${hh}:${mi}`;
     }
 
-    function findCell(ws, markerText){
-      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
-      for(let R = range.s.r; R <= range.e.r; ++R){
-        for(let C = range.s.c; C <= range.e.c; ++C){
-          const addr = XLSX.utils.encode_cell({r:R, c:C});
-          const cell = ws[addr];
-          if(cell && String(cell.v).trim() === markerText) return { r:R, c:C, a1:addr };
-        }
-      }
-      return null;
-    }
-
-    function writeAOA(ws, aoa, startR, startC){
-      for(let i=0;i<aoa.length;i++){
-        for(let j=0;j<aoa[i].length;j++){
-          const addr = XLSX.utils.encode_cell({r: startR + i, c: startC + j});
-          ws[addr] = { t: 's', v: aoa[i][j] == null ? '' : String(aoa[i][j]) };
-        }
-      }
-      // atualizar !ref se necessário
-      const old = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
-      const newRange = {
-        s: { r: Math.min(old.s.r, startR), c: Math.min(old.s.c, startC) },
-        e: { r: Math.max(old.e.r, startR + aoa.length - 1), c: Math.max(old.e.c, startC + (aoa[0]?.length||1) - 1) }
-      };
-      ws['!ref'] = XLSX.utils.encode_range(newRange);
-    }
-
-    async function exportUsingTemplate(filtered){
+    async function exportUsingTemplate(filtered) {
       const r = await fetch(TEMPLATE_URL + '?v=' + Date.now());
-      if(!r.ok) throw new Error('Falha ao carregar template: HTTP ' + r.status);
+      if (!r.ok) throw new Error('Falha ao carregar template (' + r.status + ')');
       const buf = await r.arrayBuffer();
-      const wb  = XLSX.read(buf, {type:'array'});
+      const wb = XLSX.read(buf, { type: 'array' });
 
-      // ====== preparar dados ======
-      const resumoHeader = ['Catequista','Centro','Etapa','Sala','Horario','Catecumenos'];
-      const resumoBody   = filtered.map(g => [g.catequista, g.centro, g.etapa, g.sala, g.horario, g.alunos.length]);
+      // ----- Dados -----
+      const resumoHeader = ['Catequista', 'Centro', 'Etapa', 'Sala', 'Horario', 'Catecumenos'];
+      const resumoBody = filtered.map(g => [g.catequista, g.centro, g.etapa, g.sala, g.horario, g.alunos.length]);
 
-      const detalheHeader= ['Centro','Etapa','Sala','Horario','Catequista','Nome','Nascimento'];
-      const detalheBody  = [];
-      for(const g of filtered){
-        for(const a of g.alunos){
+      const detalheHeader = ['Centro', 'Etapa', 'Sala', 'Horario', 'Catequista', 'Nome', 'Nascimento'];
+      const detalheBody = [];
+      for (const g of filtered) {
+        for (const a of g.alunos) {
           detalheBody.push([g.centro, g.etapa, g.sala, g.horario, g.catequista, a.nome, a.nascimento_fmt || '']);
         }
       }
-      detalheBody.sort((x,y)=>
-        x[0].localeCompare(y[0],'pt') ||
-        x[1].localeCompare(y[1],'pt') ||
-        String(x[2]).localeCompare(String(y[2]),'pt') ||
-        x[4].localeCompare(y[4],'pt') ||
-        x[5].localeCompare(y[5],'pt')
+      detalheBody.sort((x, y) =>
+        x[0].localeCompare(y[0], 'pt') ||
+        x[1].localeCompare(y[1], 'pt') ||
+        String(x[2]).localeCompare(String(y[2]), 'pt') ||
+        x[4].localeCompare(y[4], 'pt') ||
+        x[5].localeCompare(y[5], 'pt')
       );
 
-      // ====== escrever na folha Catequistas ======
-      const shResName = 'Catequistas';
-      const wsRes = wb.Sheets[shResName];
-      if(!wsRes) throw new Error('Folha "'+shResName+'" não encontrada no template.');
-      const mDataRes = findCell(wsRes, '[[DATA_GERACAO]]');
-      if(mDataRes){ wsRes[mDataRes.a1].v = 'Data de geração: ' + nowStamp(); }
-      const mTabRes  = findCell(wsRes, '[[TABELA_CATEQUISTAS]]');
-      if(!mTabRes) throw new Error('Marcador [[TABELA_CATEQUISTAS]] não encontrado na folha "'+shResName+'".');
-      // limpa marcador e escreve header + body
-      delete wsRes[mTabRes.a1];
-      writeAOA(wsRes, [resumoHeader, ...resumoBody], mTabRes.r, mTabRes.c);
+      // ----- Atualizar DATA_GERACAO em B6 nas duas folhas -----
+      for (const sheetName of ['Catequistas', 'Detalhe']) {
+        const ws = wb.Sheets[sheetName];
+        if (ws) {
+          const cell = 'B6';
+          ws[cell] = ws[cell] || { t:'s', v:'' };
+          ws[cell].v = 'Data de geração: ' + nowStamp();
+        } else {
+          console.warn(`[Template] Folha não encontrada: ${sheetName}`);
+        }
+      }
 
-      // ====== escrever na folha Detalhe ======
-      const shDetName = 'Detalhe';
-      const wsDet = wb.Sheets[shDetName];
-      if(!wsDet) throw new Error('Folha "'+shDetName+'" não encontrada no template.');
-      const mDataDet = findCell(wsDet, '[[DATA_GERACAO]]');
-      if(mDataDet){ wsDet[mDataDet.a1].v = 'Data de geração: ' + nowStamp(); }
-      const mTabDet  = findCell(wsDet, '[[TABELA_DETALHE]]');
-      if(!mTabDet) throw new Error('Marcador [[TABELA_DETALHE]] não encontrado na folha "'+shDetName+'".');
-      delete wsDet[mTabDet.a1];
-      writeAOA(wsDet, [detalheHeader, ...detalheBody], mTabDet.r, mTabDet.c);
+      // ----- Preencher tabelas nomeadas -----
+      const tblRes = getNamedRange(wb, 'TABELA_CATEQUISTAS');
+      writeAOA(tblRes.ws, [resumoHeader, ...resumoBody], tblRes.startR, tblRes.startC);
 
-      // grava o arquivo final preservando estilos do template
+      const tblDet = getNamedRange(wb, 'TABELA_DETALHE');
+      writeAOA(tblDet.ws, [detalheHeader, ...detalheBody], tblDet.startR, tblDet.startC);
+
+      // ----- Salvar -----
       XLSX.writeFile(wb, 'catequistas_filtrado.xlsx');
     }
 
-    // ====== fallback (sem template) — se necessário ======
-    function exportFallback(filtered){
-      // simples: duas folhas sem estilo, caso template falhe
-      const headerResumo = ['Catequista','Centro','Etapa','Sala','Horario','Catecumenos'];
-      const bodyResumo   = filtered.map(g => [g.catequista, g.centro, g.etapa, g.sala, g.horario, g.alunos.length]);
+    // fallback simples (sem template)
+    function exportFallback(filtered) {
+      const headerResumo = ['Catequista', 'Centro', 'Etapa', 'Sala', 'Horario', 'Catecumenos'];
+      const bodyResumo = filtered.map(g => [g.catequista, g.centro, g.etapa, g.sala, g.horario, g.alunos.length]);
 
-      const headerDet = ['Centro','Etapa','Sala','Horario','Catequista','Nome','Nascimento'];
-      const bodyDet   = [];
-      for(const g of filtered){
-        for(const a of g.alunos){
+      const headerDet = ['Centro', 'Etapa', 'Sala', 'Horario', 'Catequista', 'Nome', 'Nascimento'];
+      const bodyDet = [];
+      for (const g of filtered) {
+        for (const a of g.alunos) {
           bodyDet.push([g.centro, g.etapa, g.sala, g.horario, g.catequista, a.nome, a.nascimento_fmt || '']);
         }
       }
-      bodyDet.sort((x,y)=>
-        x[0].localeCompare(y[0],'pt') ||
-        x[1].localeCompare(y[1],'pt') ||
-        String(x[2]).localeCompare(String(y[2]),'pt') ||
-        x[4].localeCompare(y[4],'pt') ||
-        x[5].localeCompare(y[5],'pt')
-      );
 
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([headerResumo, ...bodyResumo]), 'Catequistas');
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([headerDet,   ...bodyDet]),   'Detalhe');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([headerDet, ...bodyDet]), 'Detalhe');
       XLSX.writeFile(wb, 'catequistas_filtrado.xlsx');
     }
 
-    async function exportXLSX_TemplateFirst(filtered){
-      try{
+    async function exportXLSX_TemplateFirst(filtered) {
+      try {
         await exportUsingTemplate(filtered);
-      }catch(err){
-        console.error('Export usando template falhou:', err);
-        alert('Não consegui usar o template. Vou gerar um ficheiro sem o layout do template.');
+      } catch (err) {
+        console.error('[Template] Erro ao usar template:', err);
+        alert('Não consegui usar o template. Vou gerar um ficheiro simples sem layout.');
         exportFallback(filtered);
       }
     }
-    // ================================================
+
+    // ===================== FIM EXPORT COM TEMPLATE =====================
 
     document.getElementById('printBtn').addEventListener('click', ()=>window.print());
     document.getElementById('exportBtn').addEventListener('click', ()=>exportXLSX_TemplateFirst(CURRENT_FILTERED));
