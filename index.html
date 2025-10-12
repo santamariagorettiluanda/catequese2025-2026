@@ -4,8 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lista de Salas — Paróquia de São Paulo de Luanda</title>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
-  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+
+  <!-- SheetJS (UMD) que expõe window.XLSX corretamente no iOS -->
+  <script defer src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
 
   <style>
     :root{
@@ -39,10 +40,9 @@
     .results{margin-top:8px;width:100%;overflow-x:hidden}
     .row{
       display:grid;
-      /* agora com 6 colunas: adicionámos Nascimento */
-      grid-template-columns: 1.2fr 0.7fr 0.8fr 0.7fr 0.5fr 0.6fr;
+      grid-template-columns: 1.2fr 0.7fr 0.8fr 0.7fr 0.5fr 0.6fr; /* inclui Nascimento */
       gap:12px;align-items:center;padding:14px;border-bottom:1px dashed #f0e1b6;
-      word-break:break-word;
+      word-break:break-word; /* evita overflow em nomes longos */
     }
     .row:nth-child(odd){background:#fff9e9}
     .row.header{
@@ -55,6 +55,9 @@
     mark{background:#fff2a8;padding:0 2px;border-radius:3px}
     .footer{color:var(--muted);font-size:12px;text-align:center;margin:24px 0}
     .alert{margin-top:8px;padding:12px;border-radius:10px;border:1px solid #f59e0b;background:#fff7ed;color:#7c2d12}
+
+    /* iOS: evita zoom estranho ao focar inputs e melhora legibilidade */
+    input, select, button { font-size:16px; }
 
     /* MOBILE */
     @media (max-width:800px){
@@ -105,7 +108,6 @@
         <select id="centroFilter"><option value="">Centro (todos)</option></select>
         <select id="etapaFilter"><option value="">Etapa (todas)</option></select>
         <select id="horarioFilter"><option value="">Horário (todos)</option></select>
-        <!-- pesquisa por número da sala -->
         <input id="salaSearch" class="sala-field" type="search" inputmode="numeric" pattern="[0-9 ]*" placeholder="Sala (ex.: 305)" />
       </div>
 
@@ -211,7 +213,7 @@
         if(fCentro)  list = list.filter(d => d.centro === fCentro);
         if(fEtapa)   list = list.filter(d => d.etapa === fEtapa);
         if(fHorario) list = list.filter(d => d.horario === fHorario);
-        if(salaQ)    list = list.filter(d => norm(String(d.sala)).includes(salaQ)); // pesquisa por sala
+        if(salaQ)    list = list.filter(d => norm(String(d.sala)).includes(salaQ));
         if(nq)       list = list.filter(d => norm(d.nome).includes(nq));
 
         render(list);
