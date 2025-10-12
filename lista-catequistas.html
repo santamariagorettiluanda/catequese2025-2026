@@ -51,14 +51,17 @@
 
     /* Modal */
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
-    .modal{background:#fff;border-radius:16px;max-width:900px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.25);border:1px solid var(--border)}
-    .modal header{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--border);padding:14px 16px}
-    .modal .m-body{padding:8px 16px 16px}
+    .modal{background:#fff;border-radius:16px;max-width:900px;width:100%;max-height:85vh;box-shadow:0 10px 30px rgba(0,0,0,.25);border:1px solid var(--border);display:flex;flex-direction:column}
+    .modal header{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--border);padding:14px 16px;z-index:2}
     .modal .title{font-weight:800}
     .modal .subtitle{color:var(--muted);font-size:14px;margin-top:4px}
     .modal .close{background:#fff;border:1px solid #ddd;border-radius:10px;padding:6px 10px;cursor:pointer;float:right}
-    .m-table .m-row{display:grid;grid-template-columns:1.4fr 0.6fr;gap:12px;padding:10px 6px;border-bottom:1px dashed #eee}
-    .m-table .m-row.header{font-weight:700;background:#fafafa;border-bottom:1px solid #eee}
+    .m-body{padding:8px 16px 16px;display:flex;flex-direction:column;gap:8px}
+    .m-table{border:1px solid #eee;border-radius:12px;overflow:hidden}
+    .m-header{display:grid;grid-template-columns:1.4fr 0.6fr;gap:12px;padding:10px 12px;background:#faf7ee;border-bottom:1px solid #eee;position:sticky;top:0;z-index:1}
+    .m-rows{max-height:60vh;overflow-y:auto;}
+    .m-row{display:grid;grid-template-columns:1.4fr 0.6fr;gap:12px;padding:10px 12px;border-bottom:1px dashed #eee;background:#fff}
+    .m-row:nth-child(odd){background:#fffbf0}
 
     /* === FIX UNIVERSAL iOS === */
     html { -webkit-text-size-adjust: 100%; }
@@ -76,8 +79,9 @@
         font-weight:600;
         color:var(--muted);
       }
-      .m-table .m-row{grid-template-columns:1fr;gap:4px}
-      .m-table .m-row.header{display:none}
+      .m-header{grid-template-columns:1fr}
+      .m-row{grid-template-columns:1fr}
+      .m-row.header{display:none}
     }
   </style>
 </head>
@@ -103,8 +107,8 @@
       </div>
 
       <div class="actions">
-        <button class="btn secondary" id="backBtn" onclick="history.back()">← Voltar</button>
-        <button class="btn" id="printBtn">Imprimir</button>
+        <button class="btn" id="exportBtn">Exportar XLSX</button>
+        <button class="btn secondary" id="printBtn">Imprimir</button>
       </div>
 
       <div class="stats" id="stats">A carregar…</div>
@@ -126,7 +130,12 @@
         <div class="subtitle" id="modalSub">—</div>
       </header>
       <div class="m-body">
-        <div class="m-table" id="modalTable"></div>
+        <div class="m-table">
+          <div class="m-header">
+            <div>Nome</div><div>Nascimento</div>
+          </div>
+          <div class="m-rows" id="modalRows"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -174,9 +183,9 @@
         if(!raw.trim()) continue;
         const parts = raw.split('|').map(s=>s.trim()).filter(Boolean);
         for(const cateq of parts){
-          const key = [cateq, d.centro, d.etapa, d.sala, d.horario].join('§');
-          if(!groups.has(key)){
-            groups.set(key, {
+          const k = [cateq, d.centro, d.etapa, d.sala, d.horario].join('§');
+          if(!groups.has(k)){
+            groups.set(k, {
               catequista: cateq,
               centro: d.centro,
               etapa: d.etapa,
@@ -185,10 +194,9 @@
               alunos: []
             });
           }
-          groups.get(key).alunos.push({nome: d.nome, nascimento_fmt: d.nascimento_fmt});
+          groups.get(k).alunos.push({nome: d.nome, nascimento_fmt: d.nascimento_fmt});
         }
       }
-      // Ordena alunos por nome dentro de cada grupo
       for(const g of groups.values()){
         g.alunos.sort((a,b)=>a.nome.localeCompare(b.nome,'pt'));
       }
@@ -197,7 +205,6 @@
 
     function render(list){
       const results = document.getElementById('results');
-      const stats   = document.getElementById('stats');
       results.innerHTML = '';
 
       const header = document.createElement('div');
@@ -220,19 +227,80 @@
         frag.appendChild(row);
       }
       results.appendChild(frag);
-      stats.textContent = list.length + ' turma' + (list.length===1?'':'s');
 
       // bind modal openers
       results.querySelectorAll('button[data-open="modal"]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
           const k = decodeURIComponent(btn.getAttribute('data-key'));
           const [catequista,centro,etapa,sala,horario] = k.split('§');
-          // encontrar grupo correspondente
           const grp = list.find(g => g.catequista===catequista && g.centro===centro && g.etapa===etapa && g.sala===sala && g.horario===horario);
           if(grp) openModal(grp);
         });
       });
     }
+
+    function openModal(group){
+      const bd = document.getElementById('modalBackdrop');
+      const title = document.getElementById('modalTitle');
+      const sub = document.getElementById('modalSub');
+      const rowsWrap = document.getElementById('modalRows');
+
+      title.textContent = `Turma de ${group.catequista}`;
+      sub.textContent = `${group.centro} • ${group.etapa} • Sala ${group.sala} • ${group.horario}`;
+
+      rowsWrap.innerHTML = ''; // limpa
+      const frag = document.createDocumentFragment();
+      for(const a of group.alunos){
+        const r = document.createElement('div');
+        r.className = 'm-row';
+        r.innerHTML = `<div>${a.nome}</div><div>${a.nascimento_fmt || '-'}</div>`;
+        frag.appendChild(r);
+      }
+      rowsWrap.appendChild(frag);
+
+      bd.style.display = 'flex';
+      bd.setAttribute('aria-hidden','false');
+      setTimeout(()=>document.getElementById('modalClose').focus(), 50);
+    }
+    function closeModal(){
+      const bd = document.getElementById('modalBackdrop');
+      bd.style.display = 'none';
+      bd.setAttribute('aria-hidden','true');
+    }
+    document.getElementById('modalBackdrop').addEventListener('click', (e)=>{ if(e.target.id==='modalBackdrop') closeModal(); });
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal(); });
+
+    document.getElementById('printBtn').addEventListener('click', ()=>window.print());
+
+    // variáveis para export e estatísticas dinâmicas
+    let CURRENT_GROUPS = [];
+    let CURRENT_FILTERED = [];
+
+    function updateStats(filtered){
+      // total de turmas
+      const totalTurmas = filtered.length;
+      // total de catequistas únicos
+      const uniqueCats = new Set(filtered.map(g => g.catequista)).size;
+      document.getElementById('stats').textContent =
+        `${totalTurmas} turma${totalTurmas===1?'':'s'} | ${uniqueCats} catequista${uniqueCats===1?'':'s'}`;
+    }
+
+    function exportXLSX(filtered){
+      const rows = filtered.map(g => ({
+        Catequista: g.catequista,
+        Centro: g.centro,
+        Etapa: g.etapa,
+        Sala: g.sala,
+        Horario: g.horario,
+        Catecumenos: g.alunos.length
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Catequistas');
+      XLSX.writeFile(wb, 'catequistas_filtrado.xlsx');
+    }
+    document.getElementById('exportBtn').addEventListener('click', ()=>exportXLSX(CURRENT_FILTERED));
 
     function applySearchFactory(GROUPS){
       const centroFilter = document.getElementById('centroFilter');
@@ -264,7 +332,6 @@
         if(salaQ)     list = list.filter(g => norm(String(g.sala)).includes(salaQ));
         if(cateqQ)    list = list.filter(g => norm(g.catequista).includes(cateqQ));
 
-        // ordena por Centro > Etapa > Sala > Catequista
         list.sort((a,b)=>{
           return a.centro.localeCompare(b.centro,'pt') ||
                  a.etapa.localeCompare(b.etapa,'pt')   ||
@@ -272,7 +339,9 @@
                  a.catequista.localeCompare(b.catequista,'pt');
         });
 
+        CURRENT_FILTERED = list;
         render(list);
+        updateStats(list);
       }
 
       let t;
@@ -286,48 +355,6 @@
 
       populate(); apply();
     }
-
-    function openModal(group){
-      const bd = document.getElementById('modalBackdrop');
-      const title = document.getElementById('modalTitle');
-      const sub = document.getElementById('modalSub');
-      const table = document.getElementById('modalTable');
-
-      title.textContent = `Turma de ${group.catequista}`;
-      sub.textContent = `${group.centro} • ${group.etapa} • Sala ${group.sala} • ${group.horario}`;
-
-      table.innerHTML = '';
-      const header = document.createElement('div');
-      header.className = 'm-row header';
-      header.innerHTML = `<div>Nome</div><div>Nascimento</div>`;
-      table.appendChild(header);
-
-      const frag = document.createDocumentFragment();
-      for(const a of group.alunos){
-        const r = document.createElement('div');
-        r.className = 'm-row';
-        r.innerHTML = `<div>${a.nome}</div><div>${a.nascimento_fmt || '-'}</div>`;
-        frag.appendChild(r);
-      }
-      table.appendChild(frag);
-
-      bd.style.display = 'flex';
-      bd.setAttribute('aria-hidden','false');
-
-      // focus trap simples
-      setTimeout(()=>document.getElementById('modalClose').focus(), 50);
-    }
-    function closeModal(){
-      const bd = document.getElementById('modalBackdrop');
-      bd.style.display = 'none';
-      bd.setAttribute('aria-hidden','true');
-    }
-
-    document.getElementById('modalBackdrop').addEventListener('click', (e)=>{ if(e.target.id==='modalBackdrop') closeModal(); });
-    document.getElementById('modalClose').addEventListener('click', closeModal);
-    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal(); });
-
-    document.getElementById('printBtn').addEventListener('click', ()=>window.print());
 
     async function load(){
       const url = XLSX_URL + '?v=' + Date.now();
@@ -357,12 +384,8 @@
       }));
       DATA.forEach(d => d.nascimento_fmt = fmtDate(d.nascimento));
 
-      const GROUPS = buildGroups(DATA);
-      applySearchFactory(GROUPS);
-
-      document.getElementById('stats').textContent =
-        GROUPS.length + ' turma' + (GROUPS.length===1?'':'s') + ' | ' +
-        DATA.length + ' catecúmeno' + (DATA.length===1?'':'s');
+      CURRENT_GROUPS = buildGroups(DATA);
+      applySearchFactory(CURRENT_GROUPS);
     }
 
     (async ()=>{
