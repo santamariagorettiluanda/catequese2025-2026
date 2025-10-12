@@ -34,7 +34,7 @@
     .results{margin-top:8px;width:100%;overflow-x:hidden}
     .row{
       display:grid;
-      grid-template-columns:1.3fr 0.9fr 0.8fr 0.5fr 0.7fr 0.5fr; /* Catequista, Centro, Etapa, Sala, Horário, Qtd */
+      grid-template-columns:1.3fr 0.9fr 0.8fr 0.5fr 0.7fr 0.5fr;
       gap:12px;align-items:center;padding:14px;border-bottom:1px dashed #f0e1b6;word-break:break-word;
     }
     .row:nth-child(odd){background:#fff9e9}
@@ -142,7 +142,7 @@
 
   <script>
     const XLSX_URL = 'dados-catequese.xlsx';
-    const TEMPLATE_URL = 'template-export.xlsx'; // arquivo modelo com logotipo e tabelas nomeadas
+    const TEMPLATE_URL = 'template-export.xlsx'; // teu template com logo e tabelas nomeadas
 
     const norm = (s)=> (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
     const fmtDate = (s)=>{
@@ -283,41 +283,7 @@
         `${totalTurmas} turma${totalTurmas===1?'':'s'} | ${uniqueCats} catequista${uniqueCats===1?'':'s'}`;
     }
 
-    // ===================== EXPORT COM TEMPLATE =====================
-
-    // devolve worksheet e range inicial de uma TABELA nomeada
-    function getNamedRange(wb, name) {
-      const namesArr = (wb.Workbook && wb.Workbook.Names) ? wb.Workbook.Names : [];
-      const definedName = namesArr.find(n => n.Name === name);
-      if (!definedName) throw new Error(`Nome '${name}' não encontrado no template.`);
-      // Ref ex.: 'Catequistas'!$B$8:$G$8
-      const [sheetNameRaw, rangeRaw] = definedName.Ref.split('!');
-      const sheetName = sheetNameRaw.replace(/^'/,'').replace(/'$/,'');
-      const range = rangeRaw;
-      const ws = wb.Sheets[sheetName];
-      if (!ws) throw new Error(`Folha '${sheetName}' não encontrada para '${name}'.`);
-      const decoded = XLSX.utils.decode_range(range);
-      return { ws, sheetName, startR: decoded.s.r, startC: decoded.s.c };
-    }
-
-    // escreve matriz AOA a partir de (startR,startC)
-    function writeAOA(ws, aoa, startR, startC) {
-      const rows = aoa.length;
-      const cols = aoa[0] ? aoa[0].length : 0;
-      for (let i = 0; i < rows; i++) {
-        for (let j = 0; j < cols; j++) {
-          const addr = XLSX.utils.encode_cell({ r: startR + i, c: startC + j });
-          ws[addr] = { t: 's', v: aoa[i][j] == null ? '' : String(aoa[i][j]) };
-        }
-      }
-      // atualizar !ref para garantir que o Excel reconheça a área
-      const old = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
-      const newRange = {
-        s: { r: Math.min(old.s.r, startR), c: Math.min(old.s.c, startC) },
-        e: { r: Math.max(old.e.r, startR + rows - 1), c: Math.max(old.e.c, startC + cols - 1) }
-      };
-      ws['!ref'] = XLSX.utils.encode_range(newRange);
-    }
+    // ===================== EXPORT COM TEMPLATE (via TABELAS) =====================
 
     function nowStamp(){
       const d = new Date();
@@ -327,6 +293,39 @@
       const hh = String(d.getHours()).padStart(2,'0');
       const mi = String(d.getMinutes()).padStart(2,'0');
       return `${dd}/${mm}/${yy} ${hh}:${mi}`;
+    }
+
+    // escreve AOA e redimensiona a Tabela (ListObject) para cobrir toda a área escrita
+    function writeTable(ws, tableName, headerAOA, bodyAOA){
+      const tbl = ws.tables[tableName];
+      if(!tbl) throw new Error(`Tabela '${tableName}' não encontrada na folha '${ws.name || '?(sem nome)'}'`);
+      // range inicial da tabela (ex. B8:G8) — assumimos que aponta ao cabeçalho
+      const range = XLSX.utils.decode_range(tbl.ref);
+      const startR = range.s.r; // linha onde está o cabeçalho da tabela no template
+      const startC = range.s.c;
+
+      const full = [headerAOA, ...bodyAOA];
+      // escrever células
+      for(let i=0;i<full.length;i++){
+        const row = full[i];
+        for(let j=0;j<row.length;j++){
+          const a1 = XLSX.utils.encode_cell({r:startR+i, c:startC+j});
+          ws[a1] = { t:'s', v: row[j] == null ? '' : String(row[j]) };
+        }
+      }
+
+      // atualizar !ref da folha (garantia)
+      const old = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
+      const newRange = {
+        s: { r: Math.min(old.s.r, startR), c: Math.min(old.s.c, startC) },
+        e: { r: Math.max(old.e.r, startR + full.length - 1), c: Math.max(old.e.c, startC + (full[0]?.length||1) - 1) }
+      };
+      ws['!ref'] = XLSX.utils.encode_range(newRange);
+
+      // redimensionar a Tabela para cobrir linhas e colunas escritas
+      const endR = startR + full.length - 1;
+      const endC = startC + (full[0]?.length||1) - 1;
+      tbl.ref = XLSX.utils.encode_range({s:{r:startR,c:startC}, e:{r:endR,c:endC}});
     }
 
     async function exportUsingTemplate(filtered) {
@@ -366,18 +365,24 @@
         }
       }
 
-      // ----- Preencher tabelas nomeadas -----
-      const tblRes = getNamedRange(wb, 'TABELA_CATEQUISTAS');
-      writeAOA(tblRes.ws, [resumoHeader, ...resumoBody], tblRes.startR, tblRes.startC);
+      // ----- Preencher as TABELAS nomeadas dentro das folhas -----
+      const wsRes = wb.Sheets['Catequistas'];
+      const wsDet = wb.Sheets['Detalhe'];
+      if(!wsRes) throw new Error('Folha "Catequistas" não encontrada no template.');
+      if(!wsDet) throw new Error('Folha "Detalhe" não encontrada no template.');
 
-      const tblDet = getNamedRange(wb, 'TABELA_DETALHE');
-      writeAOA(tblDet.ws, [detalheHeader, ...detalheBody], tblDet.startR, tblDet.startC);
+      if(!wsRes.tables || !wsRes.tables['TABELA_CATEQUISTAS'])
+        throw new Error('Tabela TABELA_CATEQUISTAS não encontrada na folha Catequistas');
+      if(!wsDet.tables || !wsDet.tables['TABELA_DETALHE'])
+        throw new Error('Tabela TABELA_DETALHE não encontrada na folha Detalhe');
+
+      writeTable(wsRes, 'TABELA_CATEQUISTAS', resumoHeader, resumoBody);
+      writeTable(wsDet, 'TABELA_DETALHE', detalheHeader, detalheBody);
 
       // ----- Salvar -----
       XLSX.writeFile(wb, 'catequistas_filtrado.xlsx');
     }
 
-    // fallback simples (sem template)
     function exportFallback(filtered) {
       const headerResumo = ['Catequista', 'Centro', 'Etapa', 'Sala', 'Horario', 'Catecumenos'];
       const bodyResumo = filtered.map(g => [g.catequista, g.centro, g.etapa, g.sala, g.horario, g.alunos.length]);
@@ -493,8 +498,9 @@
       }));
       DATA.forEach(d => d.nascimento_fmt = fmtDate(d.nascimento));
 
-      CURRENT_GROUPS = buildGroups(DATA);
-      applySearchFactory(CURRENT_GROUPS);
+      const GROUPS = buildGroups(DATA);
+      CURRENT_GROUPS = GROUPS;
+      applySearchFactory(GROUPS);
     }
 
     (async ()=>{
