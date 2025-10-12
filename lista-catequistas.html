@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Catequistas — Paróquia de São Paulo de Luanda</title>
+
+  <!-- SheetJS (UMD compatível com iOS) -->
+  <script defer src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#fffdf6; --card:#ffffff; --ink:#1b1a17; --muted:#6b7280;
+      --accent:#c28402; --accent-2:#d39f21; --ok:#16a34a; --warn:#b45309; --radius:16px;
+      --border:#ecd39a;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+    .container{max-width:1100px;margin:0 auto;padding:16px}
+    header{position:static;background:transparent;border:0;}
+    .card{width:100%;background:var(--card);box-shadow:-1px 9px 8px rgba(0,0,0,.08)}
+    .hero-brand{width:100%;padding:16px;display:flex;gap:16px;align-items:center}
+    .hero-brand img{width:72px;height:auto;border-radius:12px;border:1px solid var(--border);background:#fff;padding:4px}
+
+    .filters{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+    .filters select,.filters input[type="search"]{
+      border:1px solid #d1b35e;border-radius:10px;padding:10px 12px;background:#fff;font-size:16px
+    }
+    .filters .sala-field{min-width:120px;flex:0 0 160px}
+    .filters .cateq-field{min-width:200px;flex:1}
+
+    .stats{padding:8px 4px;color:var(--muted);font-size:14px}
+    .results{margin-top:8px;width:100%;overflow-x:hidden}
+    .row{
+      display:grid;
+      grid-template-columns:1.3fr 0.9fr 0.8fr 0.5fr 0.7fr 0.5fr; /* Catequista, Centro, Etapa, Sala, Horário, Qtd */
+      gap:12px;align-items:center;padding:14px;border-bottom:1px dashed #f0e1b6;word-break:break-word;
+    }
+    .row:nth-child(odd){background:#fff9e9}
+    .row.header{
+      font-weight:700;color:#111;background:#ffeab9;
+      border-top-left-radius:12px;border-top-right-radius:12px;border-bottom:1px solid #f0e1b6
+    }
+    .row > div{overflow:hidden;text-overflow:ellipsis;min-width:0}
+    .center{color:#7a4d00;font-weight:600}
+    .btn{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:10px;font-weight:700;cursor:pointer}
+    .btn.secondary{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+    .footer{color:var(--muted);font-size:12px;text-align:center;margin:24px 0}
+    .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+    .modal{background:#fff;border-radius:16px;max-width:900px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.25);border:1px solid var(--border)}
+    .modal header{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--border);padding:14px 16px}
+    .modal .m-body{padding:8px 16px 16px}
+    .modal .title{font-weight:800}
+    .modal .subtitle{color:var(--muted);font-size:14px;margin-top:4px}
+    .modal .close{background:#fff;border:1px solid #ddd;border-radius:10px;padding:6px 10px;cursor:pointer;float:right}
+    .m-table .m-row{display:grid;grid-template-columns:1.4fr 0.6fr;gap:12px;padding:10px 6px;border-bottom:1px dashed #eee}
+    .m-table .m-row.header{font-weight:700;background:#fafafa;border-bottom:1px solid #eee}
+
+    /* === FIX UNIVERSAL iOS === */
+    html { -webkit-text-size-adjust: 100%; }
+    input, select, textarea, button { font-size:16px !important; max-width:100%; box-sizing:border-box; }
+
+    /* MOBILE */
+    @media (max-width:800px){
+      .hero-brand{flex-direction:column;align-items:flex-start}
+      .row{grid-template-columns:1fr;gap:6px;padding:12px}
+      .row.header{display:none}
+      .row > div{display:flex;gap:6px;flex-wrap:wrap}
+      .row > div::before{
+        content:attr(data-label);
+        flex:0 0 120px;
+        font-weight:600;
+        color:var(--muted);
+      }
+      .m-table .m-row{grid-template-columns:1fr;gap:4px}
+      .m-table .m-row.header{display:none}
+    }
+  </style>
+</head>
+<body>
+  <header class="card">
+    <div class="container">
+      <div class="hero-brand card">
+        <img src="logo-paroquia.jpg" alt="Paróquia de São Paulo de Luanda" onerror="this.style.display='none'"/>
+        <div>
+          <div style="font-weight:800;font-size:18px">Paróquia de São Paulo de Luanda</div>
+          <div style="font-weight:700;color:#6b7280">Secretariado da Catequese</div>
+          <div style="margin-top:6px;font-weight:800;font-size:16px">Lista de Catequistas</div>
+          <div style="color:#374151;margin-top:2px">Ano Catequético: <strong>2025/2026</strong></div>
+        </div>
+      </div>
+
+      <div class="filters">
+        <select id="centroFilter"><option value="">Centro (todos)</option></select>
+        <select id="etapaFilter"><option value="">Etapa (todas)</option></select>
+        <select id="horarioFilter"><option value="">Horário (todos)</option></select>
+        <input id="salaSearch" class="sala-field" type="search" inputmode="numeric" placeholder="Sala (ex.: 305)" />
+        <input id="catequistaSearch" class="cateq-field" type="search" placeholder="Pesquisar catequista..." />
+      </div>
+
+      <div class="actions">
+        <button class="btn secondary" id="backBtn" onclick="history.back()">← Voltar</button>
+        <button class="btn" id="printBtn">Imprimir</button>
+      </div>
+
+      <div class="stats" id="stats">A carregar…</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="card results" id="results"></div>
+  </main>
+
+  <div class="footer">© Paróquia de São Paulo de Luanda — Secretariado da Catequese</div>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document">
+      <header>
+        <button class="close" id="modalClose">Fechar ✕</button>
+        <div class="title" id="modalTitle">Turma</div>
+        <div class="subtitle" id="modalSub">—</div>
+      </header>
+      <div class="m-body">
+        <div class="m-table" id="modalTable"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const XLSX_URL = 'dados-catequese.xlsx';
+
+    const norm = (s)=> (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+    const fmtDate = (s)=>{
+      if(!s) return '';
+      if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+      const d = new Date(s);
+      if(!isNaN(d)){const dd=String(d.getDate()).padStart(2,'0');const mm=String(d.getMonth()+1).padStart(2,'0');const yy=d.getFullYear();return `${dd}/${mm}/${yy}`;}
+      const m = s.match(/^(\d{1,2})[-.](\d{1,2})[-.](\d{4})$/);
+      if(m){const dd=m[1].padStart(2,'0');const mm=m[2].padStart(2,'0');return `${dd}/${mm}/${m[3]}`;}
+      return s;
+    };
+    const key = (s)=>norm(s).replace(/[^a-z0-9]/g,'');
+
+    function mapHeaders(cols){
+      const wanted = {
+        nome:['nome','nomecompleto'],
+        nascimento:['nascimento','datanascimento','data','dn'],
+        centro:['centro','centrodecatequese','paroquia','comunidade'],
+        etapa:['etapa','etapacatequese','nivel','ano','classe'],
+        sala:['sala','numerosala','turma','salaaula'],
+        horario:['horario','hora','turno','periodo','diaehora','diahora'],
+        catequistas:['catequistas','catequista','responsaveis','responsavel']
+      };
+      const idx = {};
+      cols.forEach((c,i)=>{
+        const k = key(c);
+        for(const [t, aliases] of Object.entries(wanted)){ if(aliases.includes(k)) idx[t]=i; }
+      });
+      return idx;
+    }
+
+    function uniq(arr){ return [...new Set(arr.filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt')); }
+
+    // Constrói grupos (catequista, centro, etapa, sala, horario)
+    function buildGroups(DATA){
+      const groups = new Map();
+      for(const d of DATA){
+        const raw = String(d.catequistas||'');
+        if(!raw.trim()) continue;
+        const parts = raw.split('|').map(s=>s.trim()).filter(Boolean);
+        for(const cateq of parts){
+          const key = [cateq, d.centro, d.etapa, d.sala, d.horario].join('§');
+          if(!groups.has(key)){
+            groups.set(key, {
+              catequista: cateq,
+              centro: d.centro,
+              etapa: d.etapa,
+              sala: d.sala,
+              horario: d.horario,
+              alunos: []
+            });
+          }
+          groups.get(key).alunos.push({nome: d.nome, nascimento_fmt: d.nascimento_fmt});
+        }
+      }
+      // Ordena alunos por nome dentro de cada grupo
+      for(const g of groups.values()){
+        g.alunos.sort((a,b)=>a.nome.localeCompare(b.nome,'pt'));
+      }
+      return Array.from(groups.values());
+    }
+
+    function render(list){
+      const results = document.getElementById('results');
+      const stats   = document.getElementById('stats');
+      results.innerHTML = '';
+
+      const header = document.createElement('div');
+      header.className = 'row header';
+      header.innerHTML = `<div>Catequista</div><div>Centro</div><div>Etapa</div><div>Sala</div><div>Horário</div><div>Catecúmenos</div>`;
+      results.appendChild(header);
+
+      const frag = document.createDocumentFragment();
+      for(const g of list){
+        const row = document.createElement('div');
+        row.className='row';
+        row.innerHTML = `
+          <div data-label="Catequista">${g.catequista}</div>
+          <div data-label="Centro" class="center">${g.centro}</div>
+          <div data-label="Etapa">${g.etapa}</div>
+          <div data-label="Sala">${g.sala}</div>
+          <div data-label="Horário">${g.horario}</div>
+          <div data-label="Catecúmenos"><button class="btn secondary" data-open="modal" data-key="${encodeURIComponent([g.catequista,g.centro,g.etapa,g.sala,g.horario].join('§'))}">${g.alunos.length}</button></div>
+        `;
+        frag.appendChild(row);
+      }
+      results.appendChild(frag);
+      stats.textContent = list.length + ' turma' + (list.length===1?'':'s');
+
+      // bind modal openers
+      results.querySelectorAll('button[data-open="modal"]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const k = decodeURIComponent(btn.getAttribute('data-key'));
+          const [catequista,centro,etapa,sala,horario] = k.split('§');
+          // encontrar grupo correspondente
+          const grp = list.find(g => g.catequista===catequista && g.centro===centro && g.etapa===etapa && g.sala===sala && g.horario===horario);
+          if(grp) openModal(grp);
+        });
+      });
+    }
+
+    function applySearchFactory(GROUPS){
+      const centroFilter = document.getElementById('centroFilter');
+      const etapaFilter  = document.getElementById('etapaFilter');
+      const horarioFilter= document.getElementById('horarioFilter');
+      const salaSearch   = document.getElementById('salaSearch');
+      const cateqSearch  = document.getElementById('catequistaSearch');
+
+      function populate(){
+        centroFilter.innerHTML = '<option value="">Centro (todos)</option>';
+        etapaFilter.innerHTML  = '<option value="">Etapa (todas)</option>';
+        horarioFilter.innerHTML= '<option value="">Horário (todos)</option>';
+        for(const c of uniq(GROUPS.map(g=>g.centro))){ const o=document.createElement('option'); o.value=c; o.textContent=c; centroFilter.appendChild(o); }
+        for(const e of uniq(GROUPS.map(g=>g.etapa))){ const o=document.createElement('option'); o.value=e; o.textContent=e; etapaFilter.appendChild(o); }
+        for(const h of uniq(GROUPS.map(g=>g.horario))){ const o=document.createElement('option'); o.value=h; o.textContent=h; horarioFilter.appendChild(o); }
+      }
+
+      function apply(){
+        const salaQ = norm(salaSearch.value);
+        const cateqQ= norm(cateqSearch.value);
+        const fCentro = centroFilter.value;
+        const fEtapa  = etapaFilter.value;
+        const fHorario= horarioFilter.value;
+
+        let list = GROUPS.slice();
+        if(fCentro)   list = list.filter(g => g.centro === fCentro);
+        if(fEtapa)    list = list.filter(g => g.etapa === fEtapa);
+        if(fHorario)  list = list.filter(g => g.horario === fHorario);
+        if(salaQ)     list = list.filter(g => norm(String(g.sala)).includes(salaQ));
+        if(cateqQ)    list = list.filter(g => norm(g.catequista).includes(cateqQ));
+
+        // ordena por Centro > Etapa > Sala > Catequista
+        list.sort((a,b)=>{
+          return a.centro.localeCompare(b.centro,'pt') ||
+                 a.etapa.localeCompare(b.etapa,'pt')   ||
+                 String(a.sala).localeCompare(String(b.sala),'pt') ||
+                 a.catequista.localeCompare(b.catequista,'pt');
+        });
+
+        render(list);
+      }
+
+      let t;
+      function deb(){ clearTimeout(t); t=setTimeout(apply, 80); }
+
+      salaSearch.addEventListener('input', deb);
+      cateqSearch.addEventListener('input', deb);
+      centroFilter.addEventListener('change', apply);
+      etapaFilter.addEventListener('change', apply);
+      horarioFilter.addEventListener('change', apply);
+
+      populate(); apply();
+    }
+
+    function openModal(group){
+      const bd = document.getElementById('modalBackdrop');
+      const title = document.getElementById('modalTitle');
+      const sub = document.getElementById('modalSub');
+      const table = document.getElementById('modalTable');
+
+      title.textContent = `Turma de ${group.catequista}`;
+      sub.textContent = `${group.centro} • ${group.etapa} • Sala ${group.sala} • ${group.horario}`;
+
+      table.innerHTML = '';
+      const header = document.createElement('div');
+      header.className = 'm-row header';
+      header.innerHTML = `<div>Nome</div><div>Nascimento</div>`;
+      table.appendChild(header);
+
+      const frag = document.createDocumentFragment();
+      for(const a of group.alunos){
+        const r = document.createElement('div');
+        r.className = 'm-row';
+        r.innerHTML = `<div>${a.nome}</div><div>${a.nascimento_fmt || '-'}</div>`;
+        frag.appendChild(r);
+      }
+      table.appendChild(frag);
+
+      bd.style.display = 'flex';
+      bd.setAttribute('aria-hidden','false');
+
+      // focus trap simples
+      setTimeout(()=>document.getElementById('modalClose').focus(), 50);
+    }
+    function closeModal(){
+      const bd = document.getElementById('modalBackdrop');
+      bd.style.display = 'none';
+      bd.setAttribute('aria-hidden','true');
+    }
+
+    document.getElementById('modalBackdrop').addEventListener('click', (e)=>{ if(e.target.id==='modalBackdrop') closeModal(); });
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal(); });
+
+    document.getElementById('printBtn').addEventListener('click', ()=>window.print());
+
+    async function load(){
+      const url = XLSX_URL + '?v=' + Date.now();
+      const r = await fetch(url);
+      if(!r.ok) throw new Error('XLSX fetch HTTP ' + r.status);
+      const buf = await r.arrayBuffer();
+      const wb  = XLSX.read(buf, {type:'array'});
+
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      if(!json.length) throw new Error('XLSX vazio na 1ª folha.');
+      const headers = json[0].map(String);
+      const idx = mapHeaders(headers);
+      const req = ['nome','nascimento','centro','etapa','sala','horario','catequistas'];
+      const missing = req.filter(k => !(k in idx));
+      if(missing.length) throw new Error('Cabeçalhos ausentes: ' + missing.join(', '));
+
+      const rows = json.slice(1).filter(r => r.some(v => String(v).trim() !== ''));
+      const DATA = rows.map(r => ({
+        nome: r[idx.nome] ?? '',
+        nascimento: r[idx.nascimento] ?? '',
+        centro: r[idx.centro] ?? '',
+        etapa: r[idx.etapa] ?? '',
+        sala: r[idx.sala] ?? '',
+        horario: r[idx.horario] ?? '',
+        catequistas: r[idx.catequistas] ?? ''
+      }));
+      DATA.forEach(d => d.nascimento_fmt = fmtDate(d.nascimento));
+
+      const GROUPS = buildGroups(DATA);
+      applySearchFactory(GROUPS);
+
+      document.getElementById('stats').textContent =
+        GROUPS.length + ' turma' + (GROUPS.length===1?'':'s') + ' | ' +
+        DATA.length + ' catecúmeno' + (DATA.length===1?'':'s');
+    }
+
+    (async ()=>{
+      try{ await load(); }
+      catch(err){
+        document.getElementById('stats').textContent = 'Falha ao carregar.';
+        console.error(err);
+      }
+    })();
+  </script>
+</body>
+</html>
