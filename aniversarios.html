@@ -17,7 +17,7 @@
       --bg: #fffdf6; --card: #ffffff; --ink: #1b1a17; --muted: #6b7280;
       --accent: #c28402; --accent-2: #d39f21; --ok: #16a34a; --warn: #b45309;
       --border: #ecd39a; --border-light: #f0e1b6; --radius: 16px;
-      --error: #dc2626; --info: #2563eb; --birthday: #ec4899; --birthday-light: #fdf2f8;
+      --error: #dc2626; --info: #2563eb; --birthday: #d97706; --birthday-light: #fef3c7;
     }
     * { box-sizing: border-box; }
     html, body {
@@ -64,7 +64,7 @@
    
     .dashboard-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 16px;
       margin-top: 16px;
     }
@@ -220,9 +220,40 @@
       height: 200px;
     }
     
+    .table-controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .search-input {
+      flex: 1;
+      min-width: 200px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(194,132,2,0.15);
+    }
+    
+    .filter-select {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+    }
+    
     .table-container {
       max-height: 400px;
-      overflow-y: auto;
+      overflow: auto;
       border: 1px solid var(--border);
       border-radius: 8px;
       margin-top: 12px;
@@ -232,6 +263,7 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 14px;
+      min-width: 600px;
     }
     
     .data-table th {
@@ -243,11 +275,35 @@
       position: sticky;
       top: 0;
       z-index: 1;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    
+    .data-table th:hover {
+      background: #f0e68c;
+    }
+    
+    .data-table th.sortable::after {
+      content: ' ↕️';
+      font-size: 12px;
+      opacity: 0.5;
+    }
+    
+    .data-table th.sort-asc::after {
+      content: ' ↑';
+      opacity: 1;
+    }
+    
+    .data-table th.sort-desc::after {
+      content: ' ↓';
+      opacity: 1;
     }
     
     .data-table td {
       padding: 8px 12px;
       border-bottom: 1px solid var(--border-light);
+      white-space: nowrap;
     }
     
     .data-table tr:hover {
@@ -301,15 +357,79 @@
     .footer { color: var(--muted); font-size: 12px; text-align: center; margin: 24px 0; }
     
     @media (max-width: 768px) {
+      .container {
+        padding: 8px;
+      }
+      
       .dashboard-grid {
         grid-template-columns: 1fr;
+        gap: 12px;
       }
+      
       .dashboard-card.wide,
       .dashboard-card.full {
         grid-column: 1;
       }
+      
+      .dashboard-card {
+        padding: 12px;
+      }
+      
+      .hero-brand {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 12px;
+      }
+      
+      .actions {
+        flex-direction: column;
+        width: 100%;
+      }
+      
+      .actions .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      
       .month-selector {
         justify-content: center;
+        gap: 4px;
+      }
+      
+      .month-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+      
+      .table-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .search-input {
+        min-width: auto;
+      }
+      
+      .chart-container {
+        height: 250px;
+      }
+      
+      .chart-container.small {
+        height: 200px;
+      }
+      
+      .stat-number.large {
+        font-size: 2.5rem;
+      }
+      
+      .birthday-person {
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+      }
+      
+      .birthday-info {
+        text-align: center;
       }
     }
   </style>
@@ -393,6 +513,12 @@
           </div>
         </div>
         <div id="upcomingCard">
+          <div class="table-controls">
+            <input type="text" id="upcomingSearch" class="search-input" placeholder="🔍 Pesquisar nos próximos aniversários...">
+            <select id="upcomingCenterFilter" class="filter-select">
+              <option value="">Todos os centros</option>
+            </select>
+          </div>
           <div id="upcomingBirthdays"></div>
         </div>
       </div>
@@ -424,17 +550,27 @@
           </div>
         </div>
         <div id="monthDetailCard">
+          <div class="table-controls">
+            <input type="text" id="monthTableSearch" class="search-input" placeholder="🔍 Pesquisar na tabela...">
+            <select id="monthCenterFilter" class="filter-select">
+              <option value="">Todos os centros</option>
+            </select>
+            <select id="monthStageFilter" class="filter-select">
+              <option value="">Todas as etapas</option>
+            </select>
+          </div>
           <div class="table-container">
             <table class="data-table" id="monthDetailTable">
               <thead>
                 <tr>
-                  <th>Data</th>
-                  <th>Nome</th>
-                  <th>Idade</th>
-                  <th>Centro</th>
-                  <th>Etapa</th>
-                  <th>Sala</th>
-                  <th>Catequistas</th>
+                  <th class="sortable" data-column="date">Data</th>
+                  <th class="sortable" data-column="name">Nome</th>
+                  <th class="sortable" data-column="birthdate">Nascimento</th>
+                  <th class="sortable" data-column="age">Idade</th>
+                  <th class="sortable" data-column="center">Centro</th>
+                  <th class="sortable" data-column="stage">Etapa</th>
+                  <th class="sortable" data-column="room">Sala</th>
+                  <th class="sortable" data-column="teachers">Catequistas</th>
                 </tr>
               </thead>
               <tbody id="monthDetailTableBody">
@@ -484,6 +620,9 @@
     let birthdayData = null;
     let charts = {};
     let selectedMonth = new Date().getMonth();
+    let currentTableData = [];
+    let currentSortColumn = null;
+    let currentSortDirection = 'asc';
 
     // Dados de exemplo expandidos com datas de nascimento
     const SAMPLE_DATA = [
@@ -797,6 +936,9 @@
       updateMonthDetails();
       updateCenterStats();
       updateStageStats();
+      
+      // Definir título do mês atual
+      document.getElementById('selectedMonthTitle').textContent = `📋 Aniversários de ${MONTH_NAMES[selectedMonth]}`;
     }
 
     // Aniversariantes de hoje
@@ -825,6 +967,7 @@
             <div class="birthday-info">
               <div class="birthday-name">${person.nome}</div>
               <div class="birthday-details">
+                Nascimento: ${person.nascimento}<br>
                 ${person.centro} • ${person.etapa} • Sala ${person.sala}<br>
                 Catequistas: ${person.catequistas || 'Não informado'}
               </div>
@@ -847,13 +990,28 @@
     // Próximos aniversários
     function updateUpcomingBirthdays() {
       const upcoming = getUpcomingBirthdays(birthdayData);
+      
+      // Popular filtro de centros
+      const centerFilter = document.getElementById('upcomingCenterFilter');
+      const centers = [...new Set(upcoming.map(p => p.centro).filter(Boolean))].sort();
+      centerFilter.innerHTML = '<option value="">Todos os centros</option>' + 
+        centers.map(center => `<option value="${center}">${center}</option>`).join('');
+      
+      renderUpcomingBirthdays(upcoming);
+      
+      // Event listeners para filtros
+      document.getElementById('upcomingSearch').addEventListener('input', filterUpcomingBirthdays);
+      document.getElementById('upcomingCenterFilter').addEventListener('change', filterUpcomingBirthdays);
+    }
+    
+    function renderUpcomingBirthdays(upcoming) {
       const container = document.getElementById('upcomingBirthdays');
       
       if (upcoming.length === 0) {
         container.innerHTML = `
           <div class="empty-state">
             <div class="icon">📅</div>
-            <div>Nenhum aniversário nos próximos 7 dias</div>
+            <div>Nenhum aniversário encontrado</div>
           </div>
         `;
         return;
@@ -865,6 +1023,7 @@
           <div class="birthday-info">
             <div class="birthday-name">${person.nome}</div>
             <div class="birthday-details">
+              Nascimento: ${person.nascimento}<br>
               Em ${person.daysUntil} dia${person.daysUntil > 1 ? 's' : ''} • ${person.centro} • ${person.etapa}<br>
               Catequistas: ${person.catequistas || 'Não informado'}
             </div>
@@ -872,6 +1031,28 @@
           <div class="birthday-age">${person.age} anos</div>
         </div>
       `).join('');
+    }
+    
+    function filterUpcomingBirthdays() {
+      const searchTerm = document.getElementById('upcomingSearch').value.toLowerCase();
+      const centerFilter = document.getElementById('upcomingCenterFilter').value;
+      
+      let filtered = getUpcomingBirthdays(birthdayData);
+      
+      if (searchTerm) {
+        filtered = filtered.filter(person => 
+          person.nome.toLowerCase().includes(searchTerm) ||
+          person.centro.toLowerCase().includes(searchTerm) ||
+          person.etapa.toLowerCase().includes(searchTerm) ||
+          (person.catequistas && person.catequistas.toLowerCase().includes(searchTerm))
+        );
+      }
+      
+      if (centerFilter) {
+        filtered = filtered.filter(person => person.centro === centerFilter);
+      }
+      
+      renderUpcomingBirthdays(filtered);
     }
 
     // Seletor de mês
@@ -915,8 +1096,8 @@
           datasets: [{
             label: 'Aniversários',
             data: monthlyData,
-            backgroundColor: '#ec4899',
-            borderColor: '#db2777',
+            backgroundColor: '#d97706',
+            borderColor: '#b45309',
             borderWidth: 1
           }]
         },
@@ -924,10 +1105,42 @@
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { display: false }
+            legend: { display: false },
+            datalabels: {
+              anchor: 'end',
+              align: 'top',
+              formatter: (value) => value > 0 ? value : '',
+              font: {
+                weight: 'bold'
+              }
+            }
           },
           scales: {
-            y: { beginAtZero: true }
+            y: { 
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          },
+          animation: {
+            onComplete: function() {
+              const ctx = this.chart.ctx;
+              ctx.font = '12px Arial';
+              ctx.fillStyle = '#1b1a17';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'bottom';
+              
+              this.data.datasets.forEach((dataset, i) => {
+                const meta = this.getDatasetMeta(i);
+                meta.data.forEach((bar, index) => {
+                  const data = dataset.data[index];
+                  if (data > 0) {
+                    ctx.fillText(data, bar.x, bar.y - 5);
+                  }
+                });
+              });
+            }
           }
         }
       });
@@ -943,28 +1156,59 @@
         return birthA.getDate() - birthB.getDate();
       });
 
+      currentTableData = monthBirthdays;
+      
+      // Popular filtros
+      const centerFilter = document.getElementById('monthCenterFilter');
+      const stageFilter = document.getElementById('monthStageFilter');
+      
+      const centers = [...new Set(monthBirthdays.map(p => p.centro).filter(Boolean))].sort();
+      const stages = [...new Set(monthBirthdays.map(p => p.etapa).filter(Boolean))].sort();
+      
+      centerFilter.innerHTML = '<option value="">Todos os centros</option>' + 
+        centers.map(center => `<option value="${center}">${center}</option>`).join('');
+      
+      stageFilter.innerHTML = '<option value="">Todas as etapas</option>' + 
+        stages.map(stage => `<option value="${stage}">${stage}</option>`).join('');
+      
+      // Event listeners
+      document.getElementById('monthTableSearch').addEventListener('input', filterMonthTable);
+      document.getElementById('monthCenterFilter').addEventListener('change', filterMonthTable);
+      document.getElementById('monthStageFilter').addEventListener('change', filterMonthTable);
+      
+      // Adicionar event listeners para ordenação
+      document.querySelectorAll('#monthDetailTable th.sortable').forEach(th => {
+        th.addEventListener('click', () => sortTable(th.dataset.column));
+      });
+      
+      renderMonthTable(monthBirthdays);
+    }
+
+    function renderMonthTable(data) {
       const tbody = document.getElementById('monthDetailTableBody');
       
-      if (monthBirthdays.length === 0) {
+      if (data.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="7" style="text-align: center; padding: 40px; color: var(--muted);">
-              Nenhum aniversário em ${MONTH_NAMES[selectedMonth]}
+            <td colspan="8" style="text-align: center; padding: 40px; color: var(--muted);">
+              Nenhum aniversário encontrado
             </td>
           </tr>
         `;
         return;
       }
       
-      tbody.innerHTML = monthBirthdays.map(person => {
+      tbody.innerHTML = data.map(person => {
         const birth = parseBirthDate(person.nascimento);
         const age = calculateAge(person.nascimento);
         const day = birth.getDate();
+        const year = birth.getFullYear();
         
         return `
           <tr>
             <td>${day}/${selectedMonth + 1}</td>
             <td><strong>${person.nome}</strong></td>
+            <td>${day}/${selectedMonth + 1}/${year}</td>
             <td>${age} anos</td>
             <td>${person.centro}</td>
             <td>${person.etapa}</td>
@@ -973,6 +1217,103 @@
           </tr>
         `;
       }).join('');
+    }
+    
+    function filterMonthTable() {
+      const searchTerm = document.getElementById('monthTableSearch').value.toLowerCase();
+      const centerFilter = document.getElementById('monthCenterFilter').value;
+      const stageFilter = document.getElementById('monthStageFilter').value;
+      
+      let filtered = [...currentTableData];
+      
+      if (searchTerm) {
+        filtered = filtered.filter(person => 
+          person.nome.toLowerCase().includes(searchTerm) ||
+          person.centro.toLowerCase().includes(searchTerm) ||
+          person.etapa.toLowerCase().includes(searchTerm) ||
+          person.sala.toString().includes(searchTerm) ||
+          (person.catequistas && person.catequistas.toLowerCase().includes(searchTerm))
+        );
+      }
+      
+      if (centerFilter) {
+        filtered = filtered.filter(person => person.centro === centerFilter);
+      }
+      
+      if (stageFilter) {
+        filtered = filtered.filter(person => person.etapa === stageFilter);
+      }
+      
+      renderMonthTable(filtered);
+    }
+    
+    function sortTable(column) {
+      // Atualizar indicadores visuais
+      document.querySelectorAll('#monthDetailTable th').forEach(th => {
+        th.classList.remove('sort-asc', 'sort-desc');
+      });
+      
+      if (currentSortColumn === column) {
+        currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        currentSortDirection = 'asc';
+        currentSortColumn = column;
+      }
+      
+      const th = document.querySelector(`#monthDetailTable th[data-column="${column}"]`);
+      th.classList.add(currentSortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+      
+      // Ordenar dados
+      let sortedData = [...currentTableData];
+      
+      sortedData.sort((a, b) => {
+        let valueA, valueB;
+        
+        switch (column) {
+          case 'date':
+            const birthA = parseBirthDate(a.nascimento);
+            const birthB = parseBirthDate(b.nascimento);
+            valueA = birthA.getDate();
+            valueB = birthB.getDate();
+            break;
+          case 'name':
+            valueA = a.nome.toLowerCase();
+            valueB = b.nome.toLowerCase();
+            break;
+          case 'birthdate':
+            valueA = parseBirthDate(a.nascimento);
+            valueB = parseBirthDate(b.nascimento);
+            break;
+          case 'age':
+            valueA = calculateAge(a.nascimento);
+            valueB = calculateAge(b.nascimento);
+            break;
+          case 'center':
+            valueA = a.centro.toLowerCase();
+            valueB = b.centro.toLowerCase();
+            break;
+          case 'stage':
+            valueA = a.etapa.toLowerCase();
+            valueB = b.etapa.toLowerCase();
+            break;
+          case 'room':
+            valueA = parseInt(a.sala) || 0;
+            valueB = parseInt(b.sala) || 0;
+            break;
+          case 'teachers':
+            valueA = (a.catequistas || '').toLowerCase();
+            valueB = (b.catequistas || '').toLowerCase();
+            break;
+          default:
+            return 0;
+        }
+        
+        if (valueA < valueB) return currentSortDirection === 'asc' ? -1 : 1;
+        if (valueA > valueB) return currentSortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+      
+      renderMonthTable(sortedData);
     }
 
     // Estatísticas por centro
