@@ -1,125 +1,350 @@
 <!DOCTYPE html>
 <html lang="pt">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lista de Catecúmenos — Paróquia de São Paulo de Luanda</title>
-  
+
   <!-- SheetJS -->
   <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-  
+
   <style>
     :root {
-      --bg: #fffdf6; --card: #ffffff; --ink: #1b1a17; --muted: #6b7280;
-      --accent: #c28402; --accent-2: #d39f21; --ok: #16a34a; --warn: #b45309;
-      --border: #ecd39a; --border-light: #f0e1b6; --radius: 16px;
+      --bg: #fffdf6;
+      --card: #ffffff;
+      --ink: #1b1a17;
+      --muted: #6b7280;
+      --accent: #c28402;
+      --accent-2: #d39f21;
+      --ok: #16a34a;
+      --warn: #b45309;
+      --border: #ecd39a;
+      --border-light: #f0e1b6;
+      --radius: 16px;
     }
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--ink);
       font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     }
-    .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
     .card {
-      width: 100%; background: var(--card); border-radius: var(--radius);
-      box-shadow: -1px 9px 8px rgba(0,0,0,0.08); margin-bottom: 16px;
+      width: 100%;
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: -1px 9px 8px rgba(0, 0, 0, 0.08);
+      margin-bottom: 16px;
     }
+
     .hero-brand {
-      width: 100%; padding: 16px; display: flex; gap: 16px; align-items: center;
+      width: 100%;
+      padding: 16px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
     }
+
     .hero-brand img {
-      width: 72px; height: auto; border-radius: 12px;
-      border: 1px solid var(--border); background: #fff; padding: 4px;
+      width: 72px;
+      height: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      padding: 4px;
     }
-    .title { font-weight: 800; font-size: 18px; }
-    .subtitle { font-weight: 700; color: var(--muted); }
-    .info { margin-top: 6px; font-weight: 800; font-size: 16px; }
-    .meta { color: #374151; margin-top: 2px; font-size: 14px; }
-    
-    .searchbar { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
-    .field { position: relative; flex: 1; min-width: 220px; }
+
+    .title {
+      font-weight: 800;
+      font-size: 18px;
+    }
+
+    .subtitle {
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .info {
+      margin-top: 6px;
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .meta {
+      color: #374151;
+      margin-top: 2px;
+      font-size: 14px;
+    }
+
+    .searchbar {
+      display: flex;
+      gap: 10px;
+      margin: 12px 0;
+      flex-wrap: wrap;
+    }
+
+    .field {
+      position: relative;
+      flex: 1;
+      min-width: 220px;
+    }
+
     .field input[type="search"] {
-      width: 100%; padding: 10px 44px; border-radius: 12px;
-      border: 1px solid var(--border); outline: none; font-size: 16px; background: #fff;
+      width: 100%;
+      padding: 10px 44px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      outline: none;
+      font-size: 16px;
+      background: #fff;
     }
-    .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(194,132,2,0.15); }
+
+    .field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(194, 132, 2, 0.15);
+    }
+
     .field .icon {
-      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-      font-size: 20px; color: var(--muted);
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 20px;
+      color: var(--muted);
     }
+
     .clear-btn {
-      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-      border: 0; background: transparent; cursor: pointer; font-size: 18px; color: var(--muted);
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      font-size: 18px;
+      color: var(--muted);
     }
-    .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
     .btn {
-      background: var(--accent); color: #fff; border: 0; padding: 10px 14px;
-      border-radius: 10px; font-weight: 700; cursor: pointer; text-decoration: none;
+      background: var(--accent);
+      color: #fff;
+      border: 0;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
       display: inline-block;
     }
-    .btn.secondary { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
-    .btn:hover { background: var(--accent-2); }
-    .btn.secondary:hover { background: var(--accent); color: #fff; }
-    
-    .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
-    .filters select, .filters input[type="search"] {
-      border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
-      background: #fff; font-size: 16px;
+
+    .btn.secondary {
+      background: #fff;
+      color: var(--accent);
+      border: 1px solid var(--accent);
     }
-    .filters .sala-field { min-width: 140px; flex: 0 0 180px; }
-    .filters .cateq-field { min-width: 200px; flex: 1; }
-    
-    .stats { padding: 10px 4px; color: var(--muted); font-size: 14px; }
-    .results { margin-top: 8px; width: 100%; overflow-x: hidden; }
+
+    .btn:hover {
+      background: var(--accent-2);
+    }
+
+    .btn.secondary:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .filters select,
+    .filters input[type="search"] {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #fff;
+      font-size: 16px;
+    }
+
+    .filters .sala-field {
+      min-width: 140px;
+      flex: 0 0 180px;
+    }
+
+    .filters .cateq-field {
+      min-width: 200px;
+      flex: 1;
+    }
+
+    .stats {
+      padding: 10px 4px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .results {
+      margin-top: 8px;
+      width: 100%;
+      overflow-x: hidden;
+    }
+
     .row {
       display: grid;
       grid-template-columns: 1.2fr 0.7fr 0.8fr 0.7fr 0.5fr 0.7fr 1fr 0.7fr;
-      gap: 12px; align-items: center; padding: 14px;
-      border-bottom: 1px dashed var(--border-light); word-break: break-word;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      border-bottom: 1px dashed var(--border-light);
+      word-break: break-word;
     }
-    .row:nth-child(odd) { background: #fff9e9; }
+
+    .row:nth-child(odd) {
+      background: #fff9e9;
+    }
+
     .row.header {
-      font-weight: 700; color: #111; background: #ffeab9;
-      border-top-left-radius: 12px; border-top-right-radius: 12px;
+      font-weight: 700;
+      color: #111;
+      background: #ffeab9;
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
       border-bottom: 1px solid var(--border-light);
     }
-    .row > div { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-    .center { color: #7a4d00; font-weight: 600; }
-    .badge, .tag {
-      display: inline-block; padding: 6px 10px; border-radius: 999px;
-      border: 1px solid var(--border); font-size: 12px; background: #fff;
+
+    .row>div {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
     }
-    .footer { color: var(--muted); font-size: 12px; text-align: center; margin: 24px 0; }
+
+    .center {
+      color: #7a4d00;
+      font-weight: 600;
+    }
+
+    .badge,
+    .tag {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      background: #fff;
+    }
+
+    .footer {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      margin: 24px 0;
+    }
+
     .alert {
-      margin-top: 8px; padding: 12px; border-radius: 10px;
-      border: 1px solid #f59e0b; background: #fff7ed; color: #7c2d12;
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #f59e0b;
+      background: #fff7ed;
+      color: #7c2d12;
     }
-    mark { background: #fff2a8; padding: 0 2px; border-radius: 3px; }
-    
+
+    mark {
+      background: #fff2a8;
+      padding: 0 2px;
+      border-radius: 3px;
+    }
+
     .file-upload {
-      margin: 16px 0; padding: 16px; border: 2px dashed var(--border);
-      border-radius: 12px; text-align: center; background: #fff;
+      margin: 16px 0;
+      padding: 16px;
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      text-align: center;
+      background: #fff;
     }
-    .file-upload input[type="file"] { margin: 8px 0; }
-    
+
+    .file-upload input[type="file"] {
+      margin: 8px 0;
+    }
+
     /* Mobile */
     @media (max-width: 800px) {
-      .hero-brand { flex-direction: column; align-items: flex-start; }
-      .searchbar { flex-direction: column; }
-      .actions { width: 100%; }
-      .actions .btn { flex: 1; }
-      .filters { gap: 6px; }
-      .row { grid-template-columns: 1fr; gap: 6px; padding: 12px; }
-      .row.header { display: none; }
-      .row > div { display: flex; gap: 6px; flex-wrap: wrap; }
-      .row > div::before {
-        content: attr(data-label); flex: 0 0 110px;
-        font-weight: 600; color: var(--muted);
+      .hero-brand {
+        flex-direction: column;
+        align-items: flex-start;
       }
-      .badge, .tag { font-size: 13px; padding: 4px 8px; }
+
+      .searchbar {
+        flex-direction: column;
+      }
+
+      .actions {
+        width: 100%;
+      }
+
+      .actions .btn {
+        flex: 1;
+      }
+
+      .filters {
+        gap: 6px;
+      }
+
+      .row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+        padding: 12px;
+      }
+
+      .row.header {
+        display: none;
+      }
+
+      .row>div {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .row>div::before {
+        content: attr(data-label);
+        flex: 0 0 110px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+
+      .badge,
+      .tag {
+        font-size: 13px;
+        padding: 4px 8px;
+      }
     }
   </style>
 </head>
+
 <body>
   <header class="card">
     <div class="container">
@@ -156,11 +381,20 @@
       </div>
 
       <div class="filters">
-        <select id="centroFilter"><option value="">Centro (todos)</option></select>
-        <select id="etapaFilter"><option value="">Etapa (todas)</option></select>
-        <select id="horarioFilter"><option value="">Horário (todos)</option></select>
-        <select id="resultadoFilter"><option value="">Resultado (todos)</option></select>
-        <input id="salaSearch" class="sala-field" type="search" inputmode="numeric" pattern="[0-9 ]*" placeholder="Sala (ex.: 305)" />
+        <select id="centroFilter">
+          <option value="">Centro (todos)</option>
+        </select>
+        <select id="etapaFilter">
+          <option value="">Etapa (todas)</option>
+        </select>
+        <select id="horarioFilter">
+          <option value="">Horário (todos)</option>
+        </select>
+        <select id="resultadoFilter">
+          <option value="">Resultado (todos)</option>
+        </select>
+        <input id="salaSearch" class="sala-field" type="search" inputmode="numeric" pattern="[0-9 ]*"
+          placeholder="Sala (ex.: 305)" />
         <input id="catequistaSearch" class="cateq-field" type="search" placeholder="Catequistas (ex.: João Silva)" />
       </div>
 
@@ -176,22 +410,11 @@
   <div class="footer" id="footerText">© Paróquia de São Paulo de Luanda — Secretariado da Catequese</div>
 
   <script>
-    // Configurações embutidas (baseadas no settings.json)
-    const CONFIG = {
-      paroquia: {
-        nome: "Paróquia de São Paulo de Luanda",
-        secretariado: "Secretariado da Catequese",
-        ano_catequetico: "2025/2026",
-        data_inicio_formatada: "1 de Outubro de 2025"
-      },
-      arquivos: {
-        dados_principais: "data/dados-catequese.xlsx",
-        logo: "assets/images/logo-paroquia.jpg"
-      },
-      validacao: {
-        campos_obrigatorios: ["nome", "centro", "etapa", "sala", "horario", "catequistas"]
-      }
-    };
+    // 🔧 DEBUG MODE: Altere para true para mostrar opção de upload de arquivo
+    const DEBUG_MODE = true;
+
+    let CONFIG = null;
+    let allData = [];
 
     // Dados de exemplo
     const SAMPLE_DATA = [
@@ -263,8 +486,6 @@
       }
     ];
 
-    let allData = [];
-    
     // Utilitários
     const norm = (s) => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
     const fmtDate = (s) => {
@@ -280,7 +501,115 @@
       return s;
     };
     const uniq = (arr) => [...new Set(arr.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt'));
-    
+
+    // Carrega configurações do arquivo settings.json
+    async function loadConfig() {
+      try {
+        const response = await fetch('config/settings.json?v=' + Date.now());
+        if (!response.ok) throw new Error('Erro ao carregar configurações: ' + response.status);
+        CONFIG = await response.json();
+
+        // Atualiza interface com configurações
+        document.getElementById('logoImg').src = CONFIG.arquivos.logo;
+        document.getElementById('paroquiaNome').textContent = CONFIG.paroquia.nome;
+        document.getElementById('secretariado').textContent = CONFIG.paroquia.secretariado;
+        document.getElementById('anoCatequetico').textContent = CONFIG.paroquia.ano_catequetico;
+        document.getElementById('dataInicio').textContent = CONFIG.paroquia.data_inicio_formatada;
+        document.getElementById('footerText').textContent = `© ${CONFIG.paroquia.nome} — ${CONFIG.paroquia.secretariado}`;
+
+        console.log('✅ Configurações carregadas:', CONFIG);
+        return CONFIG;
+
+      } catch (error) {
+        console.error('❌ Erro ao carregar configurações:', error);
+        // Valores padrão em caso de erro
+        CONFIG = {
+          paroquia: {
+            nome: "Paróquia de São Paulo de Luanda",
+            secretariado: "Secretariado da Catequese",
+            ano_catequetico: "2025/2026",
+            data_inicio_formatada: "1 de Outubro de 2025"
+          },
+          arquivos: {
+            dados_principais: "data/dados-catequese.xlsx",
+            logo: "assets/images/logo-paroquia.jpg"
+          },
+          validacao: {
+            campos_obrigatorios: ["nome", "centro", "etapa", "sala", "horario", "catequistas"]
+          }
+        };
+
+        // Atualiza interface com valores padrão
+        document.getElementById('logoImg').src = CONFIG.arquivos.logo;
+        document.getElementById('paroquiaNome').textContent = CONFIG.paroquia.nome;
+        document.getElementById('secretariado').textContent = CONFIG.paroquia.secretariado;
+        document.getElementById('anoCatequetico').textContent = CONFIG.paroquia.ano_catequetico;
+        document.getElementById('dataInicio').textContent = CONFIG.paroquia.data_inicio_formatada;
+        document.getElementById('footerText').textContent = `© ${CONFIG.paroquia.nome} — ${CONFIG.paroquia.secretariado}`;
+
+        return CONFIG;
+      }
+    }
+
+    // Carrega dados do Excel usando o caminho configurado
+    async function loadExcelData() {
+      try {
+        if (!CONFIG) throw new Error('Configurações não carregadas');
+
+        const url = CONFIG.arquivos.dados_principais + '?v=' + Date.now();
+        console.log('🔄 Carregando Excel:', url);
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Erro ao carregar Excel: ' + response.status);
+
+        const buffer = await response.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+
+        if (!json.length) throw new Error('Excel vazio');
+
+        const headers = json[0].map(String);
+        const idx = mapHeaders(headers);
+        const req = CONFIG.validacao?.campos_obrigatorios || ['nome', 'centro', 'etapa'];
+        const missing = req.filter(k => !(k in idx));
+        if (missing.length) throw new Error('Cabeçalhos ausentes: ' + missing.join(', '));
+
+        const rows = json.slice(1).filter(r => r.some(v => String(v).trim() !== ''));
+        allData = rows.map(r => ({
+          nome: r[idx.nome] ?? '',
+          nascimento: r[idx.nascimento] ?? '',
+          centro: r[idx.centro] ?? '',
+          etapa: r[idx.etapa] ?? '',
+          sala: r[idx.sala] ?? '',
+          horario: r[idx.horario] ?? '',
+          catequistas: r[idx.catequistas] ?? '',
+          resultado: r[idx.resultado] ?? ''
+        }));
+        allData.forEach(d => d.nascimento_fmt = fmtDate(d.nascimento));
+
+        const colorMap = getResultadoColors();
+        setupSearch(allData, colorMap);
+
+        console.log(`✅ ${allData.length} registos carregados do Excel`);
+
+      } catch (error) {
+        console.error('❌ Erro ao carregar Excel:', error);
+        console.log('🔄 Usando dados de exemplo como fallback');
+
+        // Usa dados de exemplo como fallback
+        allData = [...SAMPLE_DATA];
+        const colorMap = getResultadoColors();
+        setupSearch(allData, colorMap);
+
+        document.getElementById('stats').textContent = `${allData.length} registos de exemplo (Excel não encontrado)`;
+
+        const w = document.getElementById('warn');
+        w.textContent = 'Não foi possível carregar o Excel. Usando dados de exemplo. Erro: ' + error.message;
+        w.style.display = '';
+      }
+    }
+
     function mapHeaders(cols) {
       const wanted = {
         nome: ['nome', 'nomecompleto'],
@@ -300,16 +629,6 @@
         }
       });
       return idx;
-    }
-
-    // Inicializa interface com configurações
-    function initInterface() {
-      document.getElementById('logoImg').src = CONFIG.arquivos.logo;
-      document.getElementById('paroquiaNome').textContent = CONFIG.paroquia.nome;
-      document.getElementById('secretariado').textContent = CONFIG.paroquia.secretariado;
-      document.getElementById('anoCatequetico').textContent = CONFIG.paroquia.ano_catequetico;
-      document.getElementById('dataInicio').textContent = CONFIG.paroquia.data_inicio_formatada;
-      document.getElementById('footerText').textContent = `© ${CONFIG.paroquia.nome} — ${CONFIG.paroquia.secretariado}`;
     }
 
     function getResultadoColors() {
@@ -374,7 +693,7 @@
       etapaFilter.innerHTML = '<option value="">Etapa (todas)</option>';
       horarioFilter.innerHTML = '<option value="">Horário (todos)</option>';
       resultadoFilter.innerHTML = '<option value="">Resultado (todos)</option>';
-      
+
       for (const c of uniq(DATA.map(d => d.centro))) {
         const o = document.createElement('option');
         o.value = c; o.textContent = c;
@@ -445,15 +764,15 @@
 
     function loadExcelFile(file) {
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function (e) {
         try {
           const data = new Uint8Array(e.target.result);
           const workbook = XLSX.read(data, { type: 'array' });
           const worksheet = workbook.Sheets[workbook.SheetNames[0]];
           const json = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-          
+
           if (!json.length) throw new Error('Excel vazio');
-          
+
           const headers = json[0].map(String);
           const idx = mapHeaders(headers);
           const req = CONFIG.validacao.campos_obrigatorios;
@@ -475,10 +794,10 @@
 
           const colorMap = getResultadoColors();
           setupSearch(allData, colorMap);
-          
+
           document.getElementById('stats').textContent = `${allData.length} registos carregados do Excel`;
           console.log(`✅ ${allData.length} registos carregados do Excel`);
-          
+
         } catch (error) {
           console.error('❌ Erro ao carregar Excel:', error);
           document.getElementById('stats').textContent = 'Erro ao carregar Excel: ' + error.message;
@@ -491,7 +810,7 @@
     }
 
     // Event listeners
-    document.getElementById('fileInput').addEventListener('change', function(e) {
+    document.getElementById('fileInput').addEventListener('change', function (e) {
       const file = e.target.files[0];
       if (file) {
         loadExcelFile(file);
@@ -510,11 +829,40 @@
       }
     });
 
+    // Event listeners para modo debug
+    if (DEBUG_MODE) {
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('debugUpload').style.display = 'block';
+
+        document.getElementById('fileInput').addEventListener('change', function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            loadExcelFile(file);
+          }
+        });
+
+        document.getElementById('loadSampleBtn').addEventListener('click', loadSampleData);
+      });
+    }
+
     // Inicialização
-    window.addEventListener('DOMContentLoaded', () => {
-      initInterface();
-      loadSampleData(); // Carrega dados de exemplo automaticamente
-    });
+    async function init() {
+      try {
+        document.getElementById('stats').textContent = 'A carregar configurações...';
+        await loadConfig();
+
+        document.getElementById('stats').textContent = 'A carregar dados do Excel...';
+        await loadExcelData();
+
+      } catch (error) {
+        console.error('❌ Erro na inicialização:', error);
+        document.getElementById('stats').textContent = 'Erro na inicialização: ' + error.message;
+      }
+    }
+
+    // Inicia quando a página carrega
+    window.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
+
 </html>
