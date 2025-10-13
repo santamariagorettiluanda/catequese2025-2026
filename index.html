@@ -3,87 +3,120 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lista de Salas — Paróquia de São Paulo de Luanda</title>
-
-  <!-- SheetJS (UMD compatível com iOS) -->
-  <script defer src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-
+  <title>Lista de Catecúmenos — Paróquia de São Paulo de Luanda</title>
+  
+  <!-- SheetJS -->
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+  
   <style>
-    :root{
-      --bg:#fffdf6; --card:#ffffff; --ink:#1b1a17; --muted:#6b7280;
-      --accent:#c28402; --accent-2:#d39f21; --ok:#16a34a; --warn:#b45309; --radius:16px;
+    :root {
+      --bg: #fffdf6; --card: #ffffff; --ink: #1b1a17; --muted: #6b7280;
+      --accent: #c28402; --accent-2: #d39f21; --ok: #16a34a; --warn: #b45309;
+      --border: #ecd39a; --border-light: #f0e1b6; --radius: 16px;
     }
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
-    .container{max-width:1100px;margin:0 auto;padding:16px}
-    header{position:static;background:transparent;border:0;}
-    .card{width:100%;box-shadow:-1px 9px 8px 0px rgba(0, 0, 0, 0.08)}
-    .hero-brand{width:100%;padding:16px;display:flex;gap:16px;align-items:center}
-    .hero-brand img{width:72px;height:auto;border-radius:12px;border:1px solid #ecd39a;background:#fff;padding:4px}
-
-    .searchbar{display:flex;gap:10px;margin:12px 0;flex-wrap:wrap}
-    .field{position:relative;flex:1;min-width:220px}
-    .field input[type="search"]{width:100%;padding:10px 44px;border-radius:12px;
-      border:1px solid #d1b35e;outline:none;font-size:16px;background:#fff}
-    .field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(194,132,2,0.15)}
-    .field .icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:20px;color:var(--muted)}
-    .clear-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);border:0;background:transparent;
-      cursor:pointer;font-size:18px;color:var(--muted)}
-    .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .btn{background:var(--accent);color:#fff;border:0;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer}
-    .btn.secondary{background:#fff;color:var(--accent);border:1px solid var(--accent)}
-
-    .filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
-    .filters select,.filters input[type="search"]{
-      border:1px solid #d1b35e;border-radius:10px;padding:10px 12px;background:#fff;font-size:16px
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     }
-    .filters .sala-field{min-width:140px;flex:0 0 180px}
-    .filters .cateq-field{min-width:200px;flex:1}
-
-    .stats{padding:10px 4px;color:var(--muted);font-size:14px}
-    .results{margin-top:8px;width:100%;overflow-x:hidden}
-    .row{
-      display:grid;
-      /* agora com 8 colunas: Nascimento, Centro, Etapa, Sala, Horário, Catequistas, Resultado */
-      grid-template-columns:1.2fr 0.7fr 0.8fr 0.7fr 0.5fr 0.7fr 1fr 0.7fr;
-      gap:12px;align-items:center;padding:14px;border-bottom:1px dashed #f0e1b6;
-      word-break:break-word;
+    .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+    .card {
+      width: 100%; background: var(--card); border-radius: var(--radius);
+      box-shadow: -1px 9px 8px rgba(0,0,0,0.08); margin-bottom: 16px;
     }
-    .row:nth-child(odd){background:#fff9e9}
-    .row.header{
-      font-weight:700;color:#111;background:#ffeab9;
-      border-top-left-radius:12px;border-top-right-radius:12px;border-bottom:1px solid #f0e1b6
+    .hero-brand {
+      width: 100%; padding: 16px; display: flex; gap: 16px; align-items: center;
     }
-    .row > div{overflow:hidden;text-overflow:ellipsis;min-width:0}
-    .center{color:#7a4d00;font-weight:600}
-    .badge{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid #d1b35e;font-size:12px;background:#fff}
-    .tag{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid #d1b35e;font-size:12px;background:#fff}
-    .footer{color:var(--muted);font-size:12px;text-align:center;margin:24px 0}
-    .alert{margin-top:8px;padding:12px;border-radius:10px;border:1px solid #f59e0b;background:#fff7ed;color:#7c2d12}
-    mark{background:#fff2a8;padding:0 2px;border-radius:3px}
-
-    /* === FIX UNIVERSAL iOS: impede zoom e overflow em inputs === */
-    html { -webkit-text-size-adjust: 100%; }
-    input, select, textarea, button { font-size:16px !important; max-width:100%; box-sizing:border-box; }
-
-    /* MOBILE */
-    @media (max-width:800px){
-      .hero-brand{flex-direction:column;align-items:flex-start}
-      .searchbar{flex-direction:column}
-      .actions{width:100%}
-      .actions .btn{flex:1}
-      .filters{gap:6px}
-      .row{grid-template-columns:1fr;gap:6px;padding:12px}
-      .row.header{display:none}
-      .row > div{display:flex;gap:6px;flex-wrap:wrap}
-      .row > div::before{
-        content:attr(data-label);
-        flex:0 0 110px;
-        font-weight:600;
-        color:var(--muted);
+    .hero-brand img {
+      width: 72px; height: auto; border-radius: 12px;
+      border: 1px solid var(--border); background: #fff; padding: 4px;
+    }
+    .title { font-weight: 800; font-size: 18px; }
+    .subtitle { font-weight: 700; color: var(--muted); }
+    .info { margin-top: 6px; font-weight: 800; font-size: 16px; }
+    .meta { color: #374151; margin-top: 2px; font-size: 14px; }
+    
+    .searchbar { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
+    .field { position: relative; flex: 1; min-width: 220px; }
+    .field input[type="search"] {
+      width: 100%; padding: 10px 44px; border-radius: 12px;
+      border: 1px solid var(--border); outline: none; font-size: 16px; background: #fff;
+    }
+    .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(194,132,2,0.15); }
+    .field .icon {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      font-size: 20px; color: var(--muted);
+    }
+    .clear-btn {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      border: 0; background: transparent; cursor: pointer; font-size: 18px; color: var(--muted);
+    }
+    .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .btn {
+      background: var(--accent); color: #fff; border: 0; padding: 10px 14px;
+      border-radius: 10px; font-weight: 700; cursor: pointer; text-decoration: none;
+      display: inline-block;
+    }
+    .btn.secondary { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
+    .btn:hover { background: var(--accent-2); }
+    .btn.secondary:hover { background: var(--accent); color: #fff; }
+    
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+    .filters select, .filters input[type="search"] {
+      border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
+      background: #fff; font-size: 16px;
+    }
+    .filters .sala-field { min-width: 140px; flex: 0 0 180px; }
+    .filters .cateq-field { min-width: 200px; flex: 1; }
+    
+    .stats { padding: 10px 4px; color: var(--muted); font-size: 14px; }
+    .results { margin-top: 8px; width: 100%; overflow-x: hidden; }
+    .row {
+      display: grid;
+      grid-template-columns: 1.2fr 0.7fr 0.8fr 0.7fr 0.5fr 0.7fr 1fr 0.7fr;
+      gap: 12px; align-items: center; padding: 14px;
+      border-bottom: 1px dashed var(--border-light); word-break: break-word;
+    }
+    .row:nth-child(odd) { background: #fff9e9; }
+    .row.header {
+      font-weight: 700; color: #111; background: #ffeab9;
+      border-top-left-radius: 12px; border-top-right-radius: 12px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .row > div { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .center { color: #7a4d00; font-weight: 600; }
+    .badge, .tag {
+      display: inline-block; padding: 6px 10px; border-radius: 999px;
+      border: 1px solid var(--border); font-size: 12px; background: #fff;
+    }
+    .footer { color: var(--muted); font-size: 12px; text-align: center; margin: 24px 0; }
+    .alert {
+      margin-top: 8px; padding: 12px; border-radius: 10px;
+      border: 1px solid #f59e0b; background: #fff7ed; color: #7c2d12;
+    }
+    mark { background: #fff2a8; padding: 0 2px; border-radius: 3px; }
+    
+    .file-upload {
+      margin: 16px 0; padding: 16px; border: 2px dashed var(--border);
+      border-radius: 12px; text-align: center; background: #fff;
+    }
+    .file-upload input[type="file"] { margin: 8px 0; }
+    
+    /* Mobile */
+    @media (max-width: 800px) {
+      .hero-brand { flex-direction: column; align-items: flex-start; }
+      .searchbar { flex-direction: column; }
+      .actions { width: 100%; }
+      .actions .btn { flex: 1; }
+      .filters { gap: 6px; }
+      .row { grid-template-columns: 1fr; gap: 6px; padding: 12px; }
+      .row.header { display: none; }
+      .row > div { display: flex; gap: 6px; flex-wrap: wrap; }
+      .row > div::before {
+        content: attr(data-label); flex: 0 0 110px;
+        font-weight: 600; color: var(--muted);
       }
-      .badge,.tag{font-size:13px;padding:4px 8px}
+      .badge, .tag { font-size: 13px; padding: 4px 8px; }
     }
   </style>
 </head>
@@ -91,13 +124,21 @@
   <header class="card">
     <div class="container">
       <div class="hero-brand card">
-        <img src="logo-paroquia.jpg" alt="Paróquia de São Paulo de Luanda" onerror="this.style.display='none'"/>
+        <img id="logoImg" alt="Logo da Paróquia" onerror="this.style.display='none'" />
         <div>
-          <div style="font-weight:800;font-size:18px">Paróquia de São Paulo de Luanda</div>
-          <div style="font-weight:700;color:#6b7280">Secretariado da Catequese</div>
-          <div style="margin-top:6px;font-weight:800;font-size:16px">Lista Final da Catequese 2025/2026</div>
-          <div style="color:#374151;margin-top:2px">Data de Início da Catequese: <strong>1 de Outubro de 2025</strong></div>
+          <div class="title" id="paroquiaNome">Paróquia de São Paulo de Luanda</div>
+          <div class="subtitle" id="secretariado">Secretariado da Catequese</div>
+          <div class="info">Lista de Catecúmenos</div>
+          <div class="meta">Ano Catequético: <strong id="anoCatequetico">2025/2026</strong></div>
+          <div class="meta">Data de Início: <strong id="dataInicio">1 de Outubro de 2025</strong></div>
         </div>
+      </div>
+
+      <div class="file-upload">
+        <div><strong>📁 Carregar Arquivo Excel</strong></div>
+        <div>Selecione o arquivo dados-catequese.xlsx para carregar os dados:</div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" />
+        <button class="btn" id="loadSampleBtn">📊 Usar Dados de Exemplo</button>
       </div>
 
       <div class="searchbar">
@@ -107,8 +148,10 @@
           <button class="clear-btn" id="clearBtn" title="Limpar">✕</button>
         </div>
         <div class="actions">
-          <button class="btn" id="shareBtn" title="Copiar link com a pesquisa">Compartilhar pesquisa</button>
-          <button class="btn secondary" id="printBtn" title="Imprimir listagem">Imprimir</button>
+          <a href="dashboard.html" class="btn secondary">📊 Dashboard</a>
+          <a href="lista-catequistas.html" class="btn secondary">👥 Catequistas</a>
+          <button class="btn" id="shareBtn">📋 Compartilhar</button>
+          <button class="btn secondary" id="printBtn">🖨️ Imprimir</button>
         </div>
       </div>
 
@@ -118,11 +161,11 @@
         <select id="horarioFilter"><option value="">Horário (todos)</option></select>
         <select id="resultadoFilter"><option value="">Resultado (todos)</option></select>
         <input id="salaSearch" class="sala-field" type="search" inputmode="numeric" pattern="[0-9 ]*" placeholder="Sala (ex.: 305)" />
-        <input id="catequistaSearch" class="cateq-field" type="search" placeholder="Catequistas (ex.: Hermínio Furtado)" />
+        <input id="catequistaSearch" class="cateq-field" type="search" placeholder="Catequistas (ex.: João Silva)" />
       </div>
 
       <div id="warn" class="alert" style="display:none"></div>
-      <div class="stats" id="stats">A carregar…</div>
+      <div class="stats" id="stats">Carregue um arquivo Excel ou use dados de exemplo</div>
     </div>
   </header>
 
@@ -130,113 +173,159 @@
     <div class="card results" id="results"></div>
   </main>
 
-  <div class="footer">© Paróquia de São Paulo de Luanda — Secretariado da Catequese</div>
+  <div class="footer" id="footerText">© Paróquia de São Paulo de Luanda — Secretariado da Catequese</div>
 
   <script>
-    const XLSX_URL = 'dados-catequese.xlsx';
+    // Configurações embutidas (baseadas no settings.json)
+    const CONFIG = {
+      paroquia: {
+        nome: "Paróquia de São Paulo de Luanda",
+        secretariado: "Secretariado da Catequese",
+        ano_catequetico: "2025/2026",
+        data_inicio_formatada: "1 de Outubro de 2025"
+      },
+      arquivos: {
+        dados_principais: "data/dados-catequese.xlsx",
+        logo: "assets/images/logo-paroquia.jpg"
+      },
+      validacao: {
+        campos_obrigatorios: ["nome", "centro", "etapa", "sala", "horario", "catequistas"]
+      }
+    };
 
-    const norm = (s)=> (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
-    const fmtDate = (s)=>{
-      if(!s) return '';
-      if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+    // Dados de exemplo
+    const SAMPLE_DATA = [
+      {
+        nome: "João Silva Santos",
+        nascimento: "15/03/2010",
+        nascimento_fmt: "15/03/2010",
+        centro: "Centro Principal",
+        etapa: "1ª Etapa",
+        sala: "101",
+        horario: "Sábado Manhã",
+        catequistas: "Maria José|Pedro Costa",
+        resultado: "Aprovado"
+      },
+      {
+        nome: "Ana Maria Fernandes",
+        nascimento: "22/07/2009",
+        nascimento_fmt: "22/07/2009",
+        centro: "Centro Norte",
+        etapa: "2ª Etapa",
+        sala: "205",
+        horario: "Domingo Tarde",
+        catequistas: "Carlos Silva",
+        resultado: "Aprovado"
+      },
+      {
+        nome: "Miguel António Lopes",
+        nascimento: "08/11/2011",
+        nascimento_fmt: "08/11/2011",
+        centro: "Centro Sul",
+        etapa: "1ª Etapa",
+        sala: "102",
+        horario: "Sábado Tarde",
+        catequistas: "Isabel Santos|João Pereira",
+        resultado: "Em Avaliação"
+      },
+      {
+        nome: "Beatriz Costa Rodrigues",
+        nascimento: "14/05/2008",
+        nascimento_fmt: "14/05/2008",
+        centro: "Centro Principal",
+        etapa: "3ª Etapa",
+        sala: "301",
+        horario: "Domingo Manhã",
+        catequistas: "António Silva",
+        resultado: "Aprovado"
+      },
+      {
+        nome: "Francisco Manuel Sousa",
+        nascimento: "30/09/2010",
+        nascimento_fmt: "30/09/2010",
+        centro: "Centro Norte",
+        etapa: "2ª Etapa",
+        sala: "203",
+        horario: "Sábado Manhã",
+        catequistas: "Teresa Lopes|Manuel Costa",
+        resultado: "Reprovado"
+      },
+      {
+        nome: "Luísa Pereira Gomes",
+        nascimento: "12/01/2009",
+        nascimento_fmt: "12/01/2009",
+        centro: "Centro Sul",
+        etapa: "2ª Etapa",
+        sala: "204",
+        horario: "Domingo Tarde",
+        catequistas: "Fernanda Lima",
+        resultado: "Aprovado"
+      }
+    ];
+
+    let allData = [];
+    
+    // Utilitários
+    const norm = (s) => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    const fmtDate = (s) => {
+      if (!s) return '';
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
       const d = new Date(s);
-      if(!isNaN(d)){const dd=String(d.getDate()).padStart(2,'0');const mm=String(d.getMonth()+1).padStart(2,'0');const yy=d.getFullYear();return `${dd}/${mm}/${yy}`;}
-      const m = s.match(/^(\d{1,2})[-.](\d{1,2})[-.](\d{4})$/);
-      if(m){const dd=m[1].padStart(2,'0');const mm=m[2].padStart(2,'0');return `${dd}/${mm}/${m[3]}`;}
+      if (!isNaN(d)) {
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yy = d.getFullYear();
+        return `${dd}/${mm}/${yy}`;
+      }
       return s;
     };
-    const key = (s)=>norm(s).replace(/[^a-z0-9]/g,'');
-
-    function mapHeaders(cols){
+    const uniq = (arr) => [...new Set(arr.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt'));
+    
+    function mapHeaders(cols) {
       const wanted = {
-        nome:['nome','nomecompleto'],
-        nascimento:['nascimento','datanascimento','data','dn'],
-        centro:['centro','centrodecatequese','paroquia','comunidade'],
-        etapa:['etapa','etapacatequese','nivel','ano','classe'],
-        sala:['sala','numerosala','turma','salaaula'],
-        horario:['horario','hora','turno','periodo','diaehora','diahora'],
-        catequistas:['catequistas','catequista','responsaveis','responsavel'],
-        resultado:['resultado','situacao','status']
+        nome: ['nome', 'nomecompleto'],
+        nascimento: ['nascimento', 'datanascimento', 'data', 'dn'],
+        centro: ['centro', 'centrodecatequese', 'paroquia', 'comunidade'],
+        etapa: ['etapa', 'etapacatequese', 'nivel', 'ano', 'classe'],
+        sala: ['sala', 'numerosala', 'turma', 'salaaula'],
+        horario: ['horario', 'hora', 'turno', 'periodo', 'diaehora', 'diahora'],
+        catequistas: ['catequistas', 'catequista', 'responsaveis', 'responsavel'],
+        resultado: ['resultado', 'situacao', 'status']
       };
       const idx = {};
-      cols.forEach((c,i)=>{
-        const k = key(c);
-        for(const [t, aliases] of Object.entries(wanted)){ if(aliases.includes(k)) idx[t]=i; }
+      cols.forEach((c, i) => {
+        const k = norm(c).replace(/[^a-z0-9]/g, '');
+        for (const [t, aliases] of Object.entries(wanted)) {
+          if (aliases.includes(k)) idx[t] = i;
+        }
       });
       return idx;
     }
 
-    /* Lê cores da sheet 'tabelas' -> tabela 'tiposresultados' (id,nome,cor) */
-    function getResultadoColors(wb){
-      const defaults = {
-        'aprovado':'#16a34a',
-        'reprovado':'#dc2626',
-        'desistente':'#6b7280',
-        'transferido':'#2563eb'
-      };
-      const ws = wb.Sheets['tabelas'];
-      if(!ws) return defaults;
-
-      const table = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-      if(!table.length) return defaults;
-
-      // procurar cabeçalho com id/nome/cor
-      let hRow = -1, col = {};
-      for(let r=0;r<table.length;r++){
-        const row = table[r].map(v => String(v).trim().toLowerCase());
-        if(row.includes('id') && row.includes('nome') && row.includes('cor')){
-          hRow = r;
-          col = {
-            id: row.indexOf('id'),
-            nome: row.indexOf('nome'),
-            cor: row.indexOf('cor')
-          };
-          break;
-        }
-      }
-      if(hRow < 0) return defaults;
-
-      const colors = {...defaults};
-      // varremos linhas seguintes até ficar tudo vazio
-      for(let r=hRow+1; r<table.length; r++){
-        const raw = table[r] || [];
-        const nome = String(raw[col.nome]||'').trim();
-        if(!nome) continue;
-
-        // 1) se a célula 'cor' tem um valor textual (#RRGGBB), usa-o
-        let colorText = String(raw[col.cor]||'').trim();
-        let color = '';
-        if(/^#?[0-9a-f]{6}$/i.test(colorText)){
-          color = colorText.startsWith('#') ? colorText : ('#'+colorText);
-        }else{
-          // 2) tentar ler a cor de preenchimento da célula (se estilo estiver disponível)
-          try{
-            const addr = XLSX.utils.encode_cell({ r: r, c: col.cor }); // r/c 0-based em relação ao topo da sheet
-            const cell = ws[addr];
-            const fg = cell && cell.s && cell.s.fgColor && (cell.s.fgColor.rgb || cell.s.fgColor.theme);
-            if(fg && typeof fg === 'string'){
-              // fg RGB vem como "FF00FF00" (ARGB). Tirar alpha se vier 8 dígitos.
-              color = fg.length === 8 ? ('#'+fg.slice(2)) : (fg.startsWith('#') ? fg : '#'+fg);
-            }
-          }catch(e){ /* ignora e cai no fallback */ }
-        }
-
-        const keyNome = nome.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-        if(color){
-          colors[keyNome] = color;
-        }else{
-          // mantém defaults caso não tenha conseguido
-          if(!(keyNome in colors)) colors[keyNome] = defaults[keyNome] || '#6b7280';
-        }
-      }
-      return colors;
+    // Inicializa interface com configurações
+    function initInterface() {
+      document.getElementById('logoImg').src = CONFIG.arquivos.logo;
+      document.getElementById('paroquiaNome').textContent = CONFIG.paroquia.nome;
+      document.getElementById('secretariado').textContent = CONFIG.paroquia.secretariado;
+      document.getElementById('anoCatequetico').textContent = CONFIG.paroquia.ano_catequetico;
+      document.getElementById('dataInicio').textContent = CONFIG.paroquia.data_inicio_formatada;
+      document.getElementById('footerText').textContent = `© ${CONFIG.paroquia.nome} — ${CONFIG.paroquia.secretariado}`;
     }
 
-    function render(list, colorMap){
+    function getResultadoColors() {
+      return {
+        'aprovado': '#16a34a',
+        'reprovado': '#dc2626',
+        'desistente': '#6b7280',
+        'transferido': '#2563eb',
+        'em avaliacao': '#f59e0b'
+      };
+    }
+
+    function render(list, colorMap) {
       const results = document.getElementById('results');
-      const stats   = document.getElementById('stats');
-      const q       = document.getElementById('q');
-      const cateqQ  = document.getElementById('catequistaSearch').value;
+      const stats = document.getElementById('stats');
+      const q = document.getElementById('q');
 
       results.innerHTML = '';
       const header = document.createElement('div');
@@ -245,17 +334,17 @@
       results.appendChild(header);
 
       const frag = document.createDocumentFragment();
-      for(const d of list){
+      for (const d of list) {
         const nq = norm(q.value);
         const idx = norm(d.nome).indexOf(nq);
-        const nomeHTML = (idx>=0 && nq) ? d.nome.slice(0,idx)+'<mark>'+d.nome.slice(idx,idx+nq.length)+'</mark>'+d.nome.slice(idx+nq.length) : d.nome;
+        const nomeHTML = (idx >= 0 && nq) ? d.nome.slice(0, idx) + '<mark>' + d.nome.slice(idx, idx + nq.length) + '</mark>' + d.nome.slice(idx + nq.length) : d.nome;
 
         const resKey = norm(d.resultado);
-        const color  = colorMap[resKey] || '#6b7280';
-        const style  = `background:${color}20;border-color:${color};color:${color}`;
+        const color = colorMap[resKey] || '#6b7280';
+        const style = `background:${color}20;border-color:${color};color:${color}`;
 
         const row = document.createElement('div');
-        row.className='row';
+        row.className = 'row';
         row.innerHTML = `
           <div data-label="Nome">${nomeHTML}</div>
           <div data-label="Nascimento">${d.nascimento_fmt || '-'}</div>
@@ -268,118 +357,164 @@
         frag.appendChild(row);
       }
       results.appendChild(frag);
-      stats.textContent = list.length + ' resultado' + (list.length===1?'':'s');
+      stats.textContent = list.length + ' resultado' + (list.length === 1 ? '' : 's');
     }
 
-    function applySearchFactory(DATA, colorMap){
-      const q            = document.getElementById('q');
+    function setupSearch(DATA, colorMap) {
+      const q = document.getElementById('q');
       const centroFilter = document.getElementById('centroFilter');
-      const etapaFilter  = document.getElementById('etapaFilter');
-      const horarioFilter= document.getElementById('horarioFilter');
+      const etapaFilter = document.getElementById('etapaFilter');
+      const horarioFilter = document.getElementById('horarioFilter');
       const resultadoFilter = document.getElementById('resultadoFilter');
-      const salaSearch   = document.getElementById('salaSearch');
-      const cateqSearch  = document.getElementById('catequistaSearch');
+      const salaSearch = document.getElementById('salaSearch');
+      const cateqSearch = document.getElementById('catequistaSearch');
 
-      function uniq(arr){ return [...new Set(arr.filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt')); }
-
-      function populate(){
-        centroFilter.innerHTML = '<option value="">Centro (todos)</option>';
-        etapaFilter.innerHTML  = '<option value="">Etapa (todas)</option>';
-        horarioFilter.innerHTML= '<option value="">Horário (todos)</option>';
-        resultadoFilter.innerHTML= '<option value="">Resultado (todos)</option>';
-        for(const c of uniq(DATA.map(d=>d.centro))){ const o=document.createElement('option'); o.value=c; o.textContent=c; centroFilter.appendChild(o); }
-        for(const e of uniq(DATA.map(d=>d.etapa))){ const o=document.createElement('option'); o.value=e; o.textContent=e; etapaFilter.appendChild(o); }
-        for(const h of uniq(DATA.map(d=>d.horario))){ const o=document.createElement('option'); o.value=h; o.textContent=h; horarioFilter.appendChild(o); }
-        for(const r of uniq(DATA.map(d=>d.resultado))){ const o=document.createElement('option'); o.value=r; o.textContent=r; resultadoFilter.appendChild(o); }
+      // Popular filtros
+      centroFilter.innerHTML = '<option value="">Centro (todos)</option>';
+      etapaFilter.innerHTML = '<option value="">Etapa (todas)</option>';
+      horarioFilter.innerHTML = '<option value="">Horário (todos)</option>';
+      resultadoFilter.innerHTML = '<option value="">Resultado (todos)</option>';
+      
+      for (const c of uniq(DATA.map(d => d.centro))) {
+        const o = document.createElement('option');
+        o.value = c; o.textContent = c;
+        centroFilter.appendChild(o);
+      }
+      for (const e of uniq(DATA.map(d => d.etapa))) {
+        const o = document.createElement('option');
+        o.value = e; o.textContent = e;
+        etapaFilter.appendChild(o);
+      }
+      for (const h of uniq(DATA.map(d => d.horario))) {
+        const o = document.createElement('option');
+        o.value = h; o.textContent = h;
+        horarioFilter.appendChild(o);
+      }
+      for (const r of uniq(DATA.map(d => d.resultado))) {
+        const o = document.createElement('option');
+        o.value = r; o.textContent = r;
+        resultadoFilter.appendChild(o);
       }
 
-      function apply(){
+      function apply() {
         const nq = norm(q.value);
         const salaQ = norm(salaSearch.value);
         const cateqQ = norm(cateqSearch.value);
-        const fCentro  = centroFilter.value;
-        const fEtapa   = etapaFilter.value;
+        const fCentro = centroFilter.value;
+        const fEtapa = etapaFilter.value;
         const fHorario = horarioFilter.value;
         const fResultado = resultadoFilter.value;
 
         let list = DATA;
-        if(fCentro)    list = list.filter(d => d.centro === fCentro);
-        if(fEtapa)     list = list.filter(d => d.etapa === fEtapa);
-        if(fHorario)   list = list.filter(d => d.horario === fHorario);
-        if(fResultado) list = list.filter(d => d.resultado === fResultado);
-        if(salaQ)      list = list.filter(d => norm(String(d.sala)).includes(salaQ));
-        if(cateqQ)     list = list.filter(d => norm(String(d.catequistas)).includes(cateqQ));
-        if(nq)         list = list.filter(d => norm(d.nome).includes(nq));
+        if (fCentro) list = list.filter(d => d.centro === fCentro);
+        if (fEtapa) list = list.filter(d => d.etapa === fEtapa);
+        if (fHorario) list = list.filter(d => d.horario === fHorario);
+        if (fResultado) list = list.filter(d => d.resultado === fResultado);
+        if (salaQ) list = list.filter(d => norm(String(d.sala)).includes(salaQ));
+        if (cateqQ) list = list.filter(d => norm(String(d.catequistas)).includes(cateqQ));
+        if (nq) list = list.filter(d => norm(d.nome).includes(nq));
 
         render(list, colorMap);
       }
 
-      let t;
-      function debounceApply(){ clearTimeout(t); t = setTimeout(apply, 80); }
+      let timeout;
+      const debounced = () => { clearTimeout(timeout); timeout = setTimeout(apply, 80); };
 
-      q.addEventListener('input', debounceApply);
-      salaSearch.addEventListener('input', debounceApply);
-      cateqSearch.addEventListener('input', debounceApply);
-      document.getElementById('clearBtn').addEventListener('click', ()=>{ q.value=''; apply(); q.focus(); });
-      document.getElementById('printBtn').addEventListener('click', ()=>window.print());
-      document.getElementById('shareBtn').addEventListener('click', async function(){
-        try{ await navigator.clipboard.writeText(location.href);
-             this.textContent='Link copiado!'; setTimeout(()=>this.textContent='Compartilhar pesquisa',1500); }
-        catch(e){ alert('Copie o link da barra de endereços para compartilhar.'); }
-      });
+      q.addEventListener('input', debounced);
+      salaSearch.addEventListener('input', debounced);
+      cateqSearch.addEventListener('input', debounced);
       centroFilter.addEventListener('change', apply);
       etapaFilter.addEventListener('change', apply);
       horarioFilter.addEventListener('change', apply);
       resultadoFilter.addEventListener('change', apply);
 
-      populate(); apply();
+      document.getElementById('clearBtn').addEventListener('click', () => {
+        q.value = ''; apply(); q.focus();
+      });
+
+      apply();
     }
 
-    async function load(){
-      const url = XLSX_URL + '?v=' + Date.now();
-      const r = await fetch(url);
-      if(!r.ok) throw new Error('XLSX fetch HTTP ' + r.status);
-      const buf = await r.arrayBuffer();
-      const wb  = XLSX.read(buf, {type:'array'});
-
-      // Sheet principal (1ª folha)
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const json = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-      if(!json.length) throw new Error('XLSX vazio na 1ª folha.');
-      const headers = json[0].map(String);
-      const idx = mapHeaders(headers);
-      const req = ['nome','nascimento','centro','etapa','sala','horario','catequistas','resultado'];
-      const missing = req.filter(k => !(k in idx));
-      if(missing.length) throw new Error('Cabeçalhos ausentes: ' + missing.join(', '));
-
-      const rows = json.slice(1).filter(r => r.some(v => String(v).trim() !== ''));
-      const DATA = rows.map(r => ({
-        nome: r[idx.nome] ?? '',
-        nascimento: r[idx.nascimento] ?? '',
-        centro: r[idx.centro] ?? '',
-        etapa: r[idx.etapa] ?? '',
-        sala: r[idx.sala] ?? '',
-        horario: r[idx.horario] ?? '',
-        catequistas: r[idx.catequistas] ?? '',
-        resultado: r[idx.resultado] ?? ''
-      }));
-      DATA.forEach(d => d.nascimento_fmt = fmtDate(d.nascimento));
-
-      // Cores de resultado pela sheet 'tabelas' (com fallback)
-      const colorMap = getResultadoColors(wb);
-
-      applySearchFactory(DATA, colorMap);
+    function loadSampleData() {
+      allData = [...SAMPLE_DATA];
+      const colorMap = getResultadoColors();
+      setupSearch(allData, colorMap);
+      document.getElementById('stats').textContent = `${allData.length} registos de exemplo carregados`;
+      console.log('✅ Dados de exemplo carregados');
     }
 
-    (async ()=>{
-      try{ await load(); }
-      catch(err){
-        document.getElementById('stats').textContent = 'Falha ao carregar os dados.';
-        const w = document.getElementById('warn');
-        w.textContent = 'Não foi possível carregar o Excel: ' + (err && err.message ? err.message : err);
-        w.style.display = '';
+    function loadExcelFile(file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+          
+          if (!json.length) throw new Error('Excel vazio');
+          
+          const headers = json[0].map(String);
+          const idx = mapHeaders(headers);
+          const req = CONFIG.validacao.campos_obrigatorios;
+          const missing = req.filter(k => !(k in idx));
+          if (missing.length) throw new Error('Cabeçalhos ausentes: ' + missing.join(', '));
+
+          const rows = json.slice(1).filter(r => r.some(v => String(v).trim() !== ''));
+          allData = rows.map(r => ({
+            nome: r[idx.nome] ?? '',
+            nascimento: r[idx.nascimento] ?? '',
+            centro: r[idx.centro] ?? '',
+            etapa: r[idx.etapa] ?? '',
+            sala: r[idx.sala] ?? '',
+            horario: r[idx.horario] ?? '',
+            catequistas: r[idx.catequistas] ?? '',
+            resultado: r[idx.resultado] ?? ''
+          }));
+          allData.forEach(d => d.nascimento_fmt = fmtDate(d.nascimento));
+
+          const colorMap = getResultadoColors();
+          setupSearch(allData, colorMap);
+          
+          document.getElementById('stats').textContent = `${allData.length} registos carregados do Excel`;
+          console.log(`✅ ${allData.length} registos carregados do Excel`);
+          
+        } catch (error) {
+          console.error('❌ Erro ao carregar Excel:', error);
+          document.getElementById('stats').textContent = 'Erro ao carregar Excel: ' + error.message;
+          const w = document.getElementById('warn');
+          w.textContent = 'Erro: ' + error.message;
+          w.style.display = '';
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // Event listeners
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        loadExcelFile(file);
       }
-    })();
+    });
+
+    document.getElementById('loadSampleBtn').addEventListener('click', loadSampleData);
+
+    document.getElementById('printBtn').addEventListener('click', () => window.print());
+    document.getElementById('shareBtn').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(location.href);
+        alert('Link copiado para a área de transferência!');
+      } catch (e) {
+        alert('Copie o link da barra de endereços para compartilhar.');
+      }
+    });
+
+    // Inicialização
+    window.addEventListener('DOMContentLoaded', () => {
+      initInterface();
+      loadSampleData(); // Carrega dados de exemplo automaticamente
+    });
   </script>
 </body>
 </html>

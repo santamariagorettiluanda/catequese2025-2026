@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard — Paróquia de São Paulo de Luanda</title>
+  
+  <!-- SheetJS -->
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+  
+  <style>
+    :root {
+      --bg: #fffdf6; --card: #ffffff; --ink: #1b1a17; --muted: #6b7280;
+      --accent: #c28402; --accent-2: #d39f21; --ok: #16a34a; --warn: #b45309;
+      --border: #ecd39a; --border-light: #f0e1b6; --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+    .card {
+      width: 100%; background: var(--card); border-radius: var(--radius);
+      box-shadow: -1px 9px 8px rgba(0,0,0,0.08); margin-bottom: 16px;
+    }
+    .hero-brand {
+      width: 100%; padding: 16px; display: flex; gap: 16px; align-items: center;
+    }
+    .hero-brand img {
+      width: 72px; height: auto; border-radius: 12px;
+      border: 1px solid var(--border); background: #fff; padding: 4px;
+    }
+    .title { font-weight: 800; font-size: 18px; }
+    .subtitle { font-weight: 700; color: var(--muted); }
+    .info { margin-top: 6px; font-weight: 800; font-size: 16px; }
+    .meta { color: #374151; margin-top: 2px; font-size: 14px; }
+    
+    .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 16px; }
+    .btn {
+      background: var(--accent); color: #fff; border: 0; padding: 10px 14px;
+      border-radius: 10px; font-weight: 700; cursor: pointer; text-decoration: none;
+      display: inline-block;
+    }
+    .btn.secondary { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
+    .btn:hover { background: var(--accent-2); }
+    .btn.secondary:hover { background: var(--accent); color: #fff; }
+    
+    .file-upload {
+      margin: 16px 0; padding: 16px; border: 2px dashed var(--border);
+      border-radius: 12px; text-align: center; background: #fff;
+    }
+    .file-upload input[type="file"] { margin: 8px 0; }
+    
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    
+    .dashboard-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: -1px 9px 8px rgba(0,0,0,0.08);
+      border: 1px solid var(--border);
+    }
+    
+    .dashboard-card h3 {
+      margin: 0 0 12px 0;
+      color: var(--accent);
+      font-size: 18px;
+    }
+    
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--accent);
+      margin: 8px 0;
+    }
+    
+    .stat-label {
+      color: var(--muted);
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .quick-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .quick-actions .btn {
+      justify-content: flex-start;
+      text-decoration: none;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.3s ease;
+    }
+    
+    .recent-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .recent-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .recent-list li:last-child {
+      border-bottom: none;
+    }
+    
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    
+    .status-indicator.success { background: var(--ok); }
+    .status-indicator.warning { background: var(--warn); }
+    .status-indicator.error { background: #dc2626; }
+    
+    .footer { color: var(--muted); font-size: 12px; text-align: center; margin: 24px 0; }
+  </style>
+</head>
+<body>
+  <header class="card">
+    <div class="container">
+      <div class="hero-brand card">
+        <img id="logoImg" alt="Logo da Paróquia" onerror="this.style.display='none'"/>
+        <div>
+          <div class="title" id="paroquiaNome">Paróquia de São Paulo de Luanda</div>
+          <div class="subtitle" id="secretariado">Secretariado da Catequese</div>
+          <div class="info">Dashboard da Catequese</div>
+          <div class="meta">Ano Catequético: <strong id="anoCatequetico">2025/2026</strong></div>
+        </div>
+      </div>
+
+      <div class="file-upload">
+        <div><strong>📁 Carregar Arquivo Excel</strong></div>
+        <div>Selecione o arquivo dados-catequese.xlsx para carregar os dados:</div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" />
+        <button class="btn" id="loadSampleBtn">📊 Usar Dados de Exemplo</button>
+      </div>
+
+      <div class="actions">
+        <a href="index.html" class="btn">📋 Lista de Catecúmenos</a>
+        <a href="lista-catequistas.html" class="btn secondary">👥 Lista de Catequistas</a>
+        <button class="btn secondary" id="refreshBtn">🔄 Atualizar Dados</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="dashboard-grid">
+      <!-- Estatísticas Gerais -->
+      <div class="dashboard-card">
+        <h3>📊 Estatísticas Gerais</h3>
+        <div class="stat-number" id="totalCatecumenos">-</div>
+        <div class="stat-label">Total de Catecúmenos</div>
+        
+        <div style="margin-top: 16px;">
+          <div class="stat-number" style="font-size: 1.5rem;" id="totalCatequistas">-</div>
+          <div class="stat-label">Catequistas Ativos</div>
+        </div>
+        
+        <div style="margin-top: 16px;">
+          <div class="stat-number" style="font-size: 1.5rem;" id="totalTurmas">-</div>
+          <div class="stat-label">Turmas Formadas</div>
+        </div>
+      </div>
+
+      <!-- Distribuição por Centro -->
+      <div class="dashboard-card">
+        <h3>🏢 Distribuição por Centro</h3>
+        <div id="centrosStats">Carregue dados para ver estatísticas</div>
+      </div>
+
+      <!-- Distribuição por Etapa -->
+      <div class="dashboard-card">
+        <h3>📚 Distribuição por Etapa</h3>
+        <div id="etapasStats">Carregue dados para ver estatísticas</div>
+      </div>
+
+      <!-- Resultados -->
+      <div class="dashboard-card">
+        <h3>📈 Resultados</h3>
+        <div id="resultadosStats">Carregue dados para ver estatísticas</div>
+      </div>
+
+      <!-- Ações Rápidas -->
+      <div class="dashboard-card">
+        <h3>⚡ Ações Rápidas</h3>
+        <div class="quick-actions">
+          <a href="index.html" class="btn secondary">📋 Ver Lista Completa</a>
+          <a href="lista-catequistas.html" class="btn secondary">👥 Gerir Catequistas</a>
+          <button class="btn secondary" id="exportAllBtn">📊 Exportar Relatório</button>
+          <button class="btn secondary" id="backupBtn">💾 Fazer Backup</button>
+        </div>
+      </div>
+
+      <!-- Informações do Sistema -->
+      <div class="dashboard-card">
+        <h3>ℹ️ Informações do Sistema</h3>
+        <ul class="recent-list">
+          <li>
+            <span>Última atualização</span>
+            <span id="lastUpdate">-</span>
+          </li>
+          <li>
+            <span>Versão dos dados</span>
+            <span id="dataVersion">-</span>
+          </li>
+          <li>
+            <span>Estado do sistema</span>
+            <span><span class="status-indicator success"></span>Online</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <div class="footer" id="footerText">© Paróquia de São Paulo de Luanda — Secretariado da Catequese</div>
+
+  <script>
+    // Configurações embutidas (baseadas no settings.json)
+    const CONFIG = {
+      paroquia: {
+        nome: "Paróquia de São Paulo de Luanda",
+        secretariado: "Secretariado da Catequese",
+        ano_catequetico: "2025/2026"
+      },
+      arquivos: {
+        dados_principais: "data/dados-catequese.xlsx",
+        logo: "assets/images/logo-paroquia.jpg"
+      },
+      validacao: {
+        campos_obrigatorios: ["nome", "centro", "etapa", "sala", "horario", "catequistas", "resultado"]
+      }
+    };
+
+    // Dados de exemplo
+    const SAMPLE_DATA = [
+      {
+        nome: "João Silva Santos",
+        nascimento: "15/03/2010",
+        centro: "Centro Principal",
+        etapa: "1ª Etapa",
+        sala: "101",
+        horario: "Sábado Manhã",
+        catequistas: "Maria José|Pedro Costa",
+        resultado: "Aprovado"
+      },
+      {
+        nome: "Ana Maria Fernandes",
+        nascimento: "22/07/2009",
+        centro: "Centro Norte",
+        etapa: "2ª Etapa",
+        sala: "205",
+        horario: "Domingo Tarde",
+        catequistas: "Carlos Silva",
+        resultado: "Aprovado"
+      },
+      {
+        nome: "Miguel António Lopes",
+        nascimento: "08/11/2011",
+        centro: "Centro Sul",
+        etapa: "1ª Etapa",
+        sala: "102",
+        horario: "Sábado Tarde",
+        catequistas: "Isabel Santos|João Pereira",
+        resultado: "Em Avaliação"
+      },
+      {
+        nome: "Beatriz Costa Rodrigues",
+        nascimento: "14/05/2008",
+        centro: "Centro Principal",
+        etapa: "3ª Etapa",
+        sala: "301",
+        horario: "Domingo Manhã",
+        catequistas: "António Silva",
+        resultado: "Aprovado"
+      },
+      {
+        nome: "Francisco Manuel Sousa",
+        nascimento: "30/09/2010",
+        centro: "Centro Norte",
+        etapa: "2ª Etapa",
+        sala: "203",
+        horario: "Sábado Manhã",
+        catequistas: "Teresa Lopes|Manuel Costa",
+        resultado: "Reprovado"
+      },
+      {
+        nome: "Luísa Pereira Gomes",
+        nascimento: "12/01/2009",
+        centro: "Centro Sul",
+        etapa: "2ª Etapa",
+        sala: "204",
+        horario: "Domingo Tarde",
+        catequistas: "Fernanda Lima",
+        resultado: "Aprovado"
+      }
+    ];
+
+    let dashboardData = null;
+    
+    // Utilitários
+    const norm = (s) => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    const fmtDate = (s) => {
+      if (!s) return '';
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+      const d = new Date(s);
+      if (!isNaN(d)) {
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yy = d.getFullYear();
+        return `${dd}/${mm}/${yy}`;
+      }
+      return s;
+    };
+    const formatNumber = (num) => new Intl.NumberFormat('pt-AO').format(num);
+    const nowStamp = () => {
+      const d = new Date();
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yy = d.getFullYear();
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mi = String(d.getMinutes()).padStart(2, '0');
+      return `${dd}/${mm}/${yy} ${hh}:${mi}`;
+    };
+    
+    function mapHeaders(cols) {
+      const wanted = {
+        nome: ['nome', 'nomecompleto'],
+        nascimento: ['nascimento', 'datanascimento', 'data', 'dn'],
+        centro: ['centro', 'centrodecatequese', 'paroquia', 'comunidade'],
+        etapa: ['etapa', 'etapacatequese', 'nivel', 'ano', 'classe'],
+        sala: ['sala', 'numerosala', 'turma', 'salaaula'],
+        horario: ['horario', 'hora', 'turno', 'periodo', 'diaehora', 'diahora'],
+        catequistas: ['catequistas', 'catequista', 'responsaveis', 'responsavel'],
+        resultado: ['resultado', 'situacao', 'status']
+      };
+      const idx = {};
+      cols.forEach((c, i) => {
+        const k = norm(c).replace(/[^a-z0-9]/g, '');
+        for (const [t, aliases] of Object.entries(wanted)) {
+          if (aliases.includes(k)) idx[t] = i;
+        }
+      });
+      return idx;
+    }
+
+    // Inicializa interface com configurações
+    function initInterface() {
+      document.getElementById('logoImg').src = CONFIG.arquivos.logo;
+      document.getElementById('paroquiaNome').textContent = CONFIG.paroquia.nome;
+      document.getElementById('secretariado').textContent = CONFIG.paroquia.secretariado;
+      document.getElementById('anoCatequetico').textContent = CONFIG.paroquia.ano_catequetico;
+      document.getElementById('footerText').textContent = `© ${CONFIG.paroquia.nome} — ${CONFIG.paroquia.secretariado}`;
+    }
+
+    // Atualização do dashboard
+    function updateDashboard() {
+      if (!dashboardData) return;
+
+      // Estatísticas gerais
+      const totalCatecumenos = dashboardData.length;
+      const catequistasUnicos = new Set();
+      const turmasUnicas = new Set();
+
+      dashboardData.forEach(d => {
+        if (d.catequistas) {
+          d.catequistas.split('|').forEach(c => catequistasUnicos.add(c.trim()));
+        }
+        if (d.centro && d.etapa && d.sala && d.horario) {
+          turmasUnicas.add(`${d.centro}-${d.etapa}-${d.sala}-${d.horario}`);
+        }
+      });
+
+      document.getElementById('totalCatecumenos').textContent = formatNumber(totalCatecumenos);
+      document.getElementById('totalCatequistas').textContent = formatNumber(catequistasUnicos.size);
+      document.getElementById('totalTurmas').textContent = formatNumber(turmasUnicas.size);
+
+      // Distribuição por centro
+      const centros = {};
+      dashboardData.forEach(d => {
+        if (d.centro) {
+          centros[d.centro] = (centros[d.centro] || 0) + 1;
+        }
+      });
+
+      const centrosHtml = Object.entries(centros)
+        .sort(([,a], [,b]) => b - a)
+        .map(([centro, count]) => {
+          const percentage = ((count / totalCatecumenos) * 100).toFixed(1);
+          return `
+            <div style="margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>${centro}</span>
+                <span>${count} (${percentage}%)</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: ${percentage}%"></div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      document.getElementById('centrosStats').innerHTML = centrosHtml;
+
+      // Distribuição por etapa
+      const etapas = {};
+      dashboardData.forEach(d => {
+        if (d.etapa) {
+          etapas[d.etapa] = (etapas[d.etapa] || 0) + 1;
+        }
+      });
+
+      const etapasHtml = Object.entries(etapas)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([etapa, count]) => {
+          const percentage = ((count / totalCatecumenos) * 100).toFixed(1);
+          return `
+            <div style="margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>${etapa}</span>
+                <span>${count} (${percentage}%)</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: ${percentage}%"></div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      document.getElementById('etapasStats').innerHTML = etapasHtml;
+
+      // Distribuição por resultado
+      const resultados = {};
+      dashboardData.forEach(d => {
+        if (d.resultado) {
+          resultados[d.resultado] = (resultados[d.resultado] || 0) + 1;
+        }
+      });
+
+      const resultadosHtml = Object.entries(resultados)
+        .sort(([,a], [,b]) => b - a)
+        .map(([resultado, count]) => {
+          const percentage = ((count / totalCatecumenos) * 100).toFixed(1);
+          return `
+            <div style="margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>${resultado}</span>
+                <span>${count} (${percentage}%)</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: ${percentage}%"></div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      document.getElementById('resultadosStats').innerHTML = resultadosHtml;
+
+      // Informações do sistema
+      document.getElementById('lastUpdate').textContent = nowStamp();
+      document.getElementById('dataVersion').textContent = new Date().toISOString().split('T')[0];
+    }
+
+    function loadSampleData() {
+      dashboardData = [...SAMPLE_DATA];
+      updateDashboard();
+      console.log('✅ Dados de exemplo carregados no dashboard');
+    }
+
+    function loadExcelFile(file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+          
+          if (!json.length) throw new Error('Excel vazio');
+          
+          const headers = json[0].map(String);
+          const idx = mapHeaders(headers);
+          const rows = json.slice(1).filter(r => r.some(v => String(v).trim() !== ''));
+          
+          dashboardData = rows.map(r => ({
+            nome: r[idx.nome] ?? '',
+            nascimento: r[idx.nascimento] ?? '',
+            centro: r[idx.centro] ?? '',
+            etapa: r[idx.etapa] ?? '',
+            sala: r[idx.sala] ?? '',
+            horario: r[idx.horario] ?? '',
+            catequistas: r[idx.catequistas] ?? '',
+            resultado: r[idx.resultado] ?? ''
+          }));
+
+          updateDashboard();
+          console.log(`✅ Dashboard atualizado com ${dashboardData.length} registos do Excel`);
+          
+        } catch (error) {
+          console.error('❌ Erro ao carregar dados:', error);
+          alert('Erro ao carregar dados: ' + error.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // Event listeners
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        loadExcelFile(file);
+      }
+    });
+
+    document.getElementById('loadSampleBtn').addEventListener('click', loadSampleData);
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      if (dashboardData) {
+        updateDashboard();
+        alert('Dashboard atualizado!');
+      } else {
+        alert('Carregue dados primeiro');
+      }
+    });
+    
+    document.getElementById('exportAllBtn').addEventListener('click', async () => {
+      if (!dashboardData) {
+        alert('Nenhum dado carregado para exportar');
+        return;
+      }
+      
+      try {
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(dashboardData);
+        XLSX.utils.book_append_sheet(wb, ws, 'Dados Completos');
+        XLSX.writeFile(wb, `relatorio_catequese_${new Date().toISOString().split('T')[0]}.xlsx`);
+        alert('Relatório exportado com sucesso!');
+      } catch (error) {
+        alert('Erro ao exportar relatório: ' + error.message);
+      }
+    });
+
+    document.getElementById('backupBtn').addEventListener('click', () => {
+      if (!dashboardData) {
+        alert('Nenhum dado carregado para backup');
+        return;
+      }
+      
+      try {
+        const timestamp = nowStamp().replace(/[/:]/g, '-');
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(dashboardData);
+        XLSX.utils.book_append_sheet(wb, ws, 'Backup');
+        XLSX.writeFile(wb, `backup_catequese_${timestamp}.xlsx`);
+        alert('Backup criado com sucesso!');
+      } catch (error) {
+        alert('Erro ao criar backup: ' + error.message);
+      }
+    });
+
+    // Inicialização
+    window.addEventListener('DOMContentLoaded', () => {
+      initInterface();
+      loadSampleData(); // Carrega dados de exemplo automaticamente
+    });
+  </script>
+</body>
+</html>
