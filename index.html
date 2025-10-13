@@ -359,9 +359,10 @@
         </div>
       </div>
 
-      <div class="file-upload">
-        <div><strong>📁 Carregar Arquivo Excel</strong></div>
-        <div>Selecione o arquivo dados-catequese.xlsx para carregar os dados:</div>
+      <!-- Debug Mode: File Upload (só aparece se DEBUG_MODE = true) -->
+      <div id="debugUpload" class="debug-upload" style="display:none">
+        <div><strong>🔧 MODO DEBUG ATIVO</strong></div>
+        <div>Carregar arquivo Excel para testes:</div>
         <input type="file" id="fileInput" accept=".xlsx,.xls" />
         <button class="btn" id="loadSampleBtn">📊 Usar Dados de Exemplo</button>
       </div>
