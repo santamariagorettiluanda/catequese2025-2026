@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -10,128 +11,358 @@
 
   <style>
     :root {
-      --bg: #fffdf6; --card: #ffffff; --ink: #1b1a17; --muted: #6b7280;
-      --accent: #c28402; --accent-2: #d39f21; --ok: #16a34a; --warn: #b45309;
-      --border: #ecd39a; --border-light: #f0e1b6; --radius: 16px;
+      --bg: #fffdf6;
+      --card: #ffffff;
+      --ink: #1b1a17;
+      --muted: #6b7280;
+      --accent: #c28402;
+      --accent-2: #d39f21;
+      --ok: #16a34a;
+      --warn: #b45309;
+      --border: #ecd39a;
+      --border-light: #f0e1b6;
+      --radius: 16px;
     }
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--ink);
       font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     }
-    .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
     .card {
-      width: 100%; background: var(--card); border-radius: var(--radius);
-      box-shadow: -1px 9px 8px rgba(0,0,0,0.08); margin-bottom: 16px;
+      width: 100%;
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: -1px 9px 8px rgba(0, 0, 0, 0.08);
+      margin-bottom: 16px;
     }
+
     .hero-brand {
-      width: 100%; padding: 16px; display: flex; gap: 16px; align-items: center;
+      width: 100%;
+      padding: 16px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
     }
+
     .hero-brand img {
-      width: 72px; height: auto; border-radius: 12px;
-      border: 1px solid var(--border); background: #fff; padding: 4px;
+      width: 72px;
+      height: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      padding: 4px;
     }
-    .title { font-weight: 800; font-size: 18px; }
-    .subtitle { font-weight: 700; color: var(--muted); }
-    .info { margin-top: 6px; font-weight: 800; font-size: 16px; }
-    .meta { color: #374151; margin-top: 2px; font-size: 14px; }
 
-    .filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
-    .filters select, .filters input[type="search"] {
-      border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
-      background: #fff; font-size: 16px;
+    .title {
+      font-weight: 800;
+      font-size: 18px;
     }
-    .filters .sala-field { min-width: 120px; flex: 0 0 160px; }
-    .filters .cateq-field { min-width: 200px; flex: 1; }
 
-    .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+    .subtitle {
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .info {
+      margin-top: 6px;
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .meta {
+      color: #374151;
+      margin-top: 2px;
+      font-size: 14px;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .filters select,
+    .filters input[type="search"] {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #fff;
+      font-size: 16px;
+    }
+
+    .filters .sala-field {
+      min-width: 120px;
+      flex: 0 0 160px;
+    }
+
+    .filters .cateq-field {
+      min-width: 200px;
+      flex: 1;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
     .btn {
-      background: var(--accent); color: #fff; border: 0; padding: 8px 12px;
-      border-radius: 10px; font-weight: 700; cursor: pointer; text-decoration: none;
+      background: var(--accent);
+      color: #fff;
+      border: 0;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
       display: inline-block;
     }
-    .btn.secondary { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
-    .btn:hover { background: var(--accent-2); }
-    .btn.secondary:hover { background: var(--accent); color: #fff; }
 
-    .stats { padding: 8px 4px; color: var(--muted); font-size: 14px; }
-    .results { margin-top: 8px; width: 100%; overflow-x: hidden; }
+    .btn.secondary {
+      background: #fff;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+
+    .btn:hover {
+      background: var(--accent-2);
+    }
+
+    .btn.secondary:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .stats {
+      padding: 8px 4px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .results {
+      margin-top: 8px;
+      width: 100%;
+      overflow-x: hidden;
+    }
+
     .row {
       display: grid;
       grid-template-columns: 1.3fr 0.9fr 0.8fr 0.5fr 0.7fr 0.5fr;
-      gap: 12px; align-items: center; padding: 14px;
-      border-bottom: 1px dashed var(--border-light); word-break: break-word;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      border-bottom: 1px dashed var(--border-light);
+      word-break: break-word;
     }
-    .row:nth-child(odd) { background: #fff9e9; }
+
+    .row:nth-child(odd) {
+      background: #fff9e9;
+    }
+
     .row.header {
-      font-weight: 700; color: #111; background: #ffeab9;
-      border-top-left-radius: 12px; border-top-right-radius: 12px;
+      font-weight: 700;
+      color: #111;
+      background: #ffeab9;
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
       border-bottom: 1px solid var(--border-light);
     }
-    .row > div { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-    .center { color: #7a4d00; font-weight: 600; }
-    .footer { color: var(--muted); font-size: 12px; text-align: center; margin: 24px 0; }
 
-    .file-upload {
-      margin: 16px 0; padding: 16px; border: 2px dashed var(--border);
-      border-radius: 12px; text-align: center; background: #fff;
+    .row>div {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
     }
-    .file-upload input[type="file"] { margin: 8px 0; }
+
+    .center {
+      color: #7a4d00;
+      font-weight: 600;
+    }
+
+    .footer {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      margin: 24px 0;
+    }
+
+    .debug-upload {
+      margin: 16px 0;
+      padding: 16px;
+      border: 2px dashed #dc2626;
+      border-radius: 12px;
+      text-align: center;
+      background: #fef2f2;
+      color: #991b1b;
+    }
+
+    .debug-upload input[type="file"] {
+      margin: 8px 0;
+    }
 
     /* Modal */
     .modal-backdrop {
-      position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none;
-      align-items: center; justify-content: center; padding: 16px; z-index: 50;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 50;
     }
+
     .modal {
-      background: #fff; border-radius: 16px; max-width: 900px; width: 100%;
-      max-height: 85vh; box-shadow: 0 10px 30px rgba(0,0,0,.25);
-      border: 1px solid var(--border); display: flex; flex-direction: column;
+      background: #fff;
+      border-radius: 16px;
+      max-width: 900px;
+      width: 100%;
+      max-height: 85vh;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
     }
+
     .modal header {
-      position: sticky; top: 0; background: #fff; border-bottom: 1px solid var(--border);
-      padding: 14px 16px; z-index: 2;
+      position: sticky;
+      top: 0;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 16px;
+      z-index: 2;
     }
-    .modal .title { font-weight: 800; }
-    .modal .subtitle { color: #6b7280; font-size: 14px; margin-top: 4px; }
+
+    .modal .title {
+      font-weight: 800;
+    }
+
+    .modal .subtitle {
+      color: #6b7280;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
     .modal .close {
-      background: #fff; border: 1px solid #ddd; border-radius: 10px;
-      padding: 6px 10px; cursor: pointer; float: right;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      float: right;
     }
-    .m-body { padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
-    .m-table { border: 1px solid #eee; border-radius: 12px; overflow: hidden; }
+
+    .m-body {
+      padding: 8px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .m-table {
+      border: 1px solid #eee;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
     .m-header {
-      display: grid; grid-template-columns: 1.4fr 0.6fr; gap: 12px; padding: 10px 12px;
-      background: #faf7ee; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 1;
+      display: grid;
+      grid-template-columns: 1.4fr 0.6fr;
+      gap: 12px;
+      padding: 10px 12px;
+      background: #faf7ee;
+      border-bottom: 1px solid #eee;
+      position: sticky;
+      top: 0;
+      z-index: 1;
     }
-    .m-rows { max-height: 60vh; overflow-y: auto; }
+
+    .m-rows {
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
     .m-row {
-      display: grid; grid-template-columns: 1.4fr 0.6fr; gap: 12px; padding: 10px 12px;
-      border-bottom: 1px dashed #eee; background: #fff;
+      display: grid;
+      grid-template-columns: 1.4fr 0.6fr;
+      gap: 12px;
+      padding: 10px 12px;
+      border-bottom: 1px dashed #eee;
+      background: #fff;
     }
-    .m-row:nth-child(odd) { background: #fffbf0; }
+
+    .m-row:nth-child(odd) {
+      background: #fffbf0;
+    }
 
     /* Mobile */
     @media (max-width: 800px) {
-      .hero-brand { flex-direction: column; align-items: flex-start; }
-      .row { grid-template-columns: 1fr; gap: 6px; padding: 12px; }
-      .row.header { display: none; }
-      .row > div { display: flex; gap: 6px; flex-wrap: wrap; }
-      .row > div::before {
-        content: attr(data-label); flex: 0 0 120px;
-        font-weight: 600; color: var(--muted);
+      .hero-brand {
+        flex-direction: column;
+        align-items: flex-start;
       }
-      .m-header { grid-template-columns: 1fr; }
-      .m-row { grid-template-columns: 1fr; }
-      .m-row.header { display: none; }
+
+      .row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+        padding: 12px;
+      }
+
+      .row.header {
+        display: none;
+      }
+
+      .row>div {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .row>div::before {
+        content: attr(data-label);
+        flex: 0 0 120px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+
+      .m-header {
+        grid-template-columns: 1fr;
+      }
+
+      .m-row {
+        grid-template-columns: 1fr;
+      }
+
+      .m-row.header {
+        display: none;
+      }
     }
   </style>
 </head>
+
 <body>
   <header class="card">
     <div class="container">
       <div class="hero-brand card">
-        <img id="logoImg" alt="Logo da Paróquia" onerror="this.style.display='none'"/>
+        <img id="logoImg" alt="Logo da Paróquia" onerror="this.style.display='none'" />
         <div>
           <div class="title" id="paroquiaNome">Paróquia de São Paulo de Luanda</div>
           <div class="subtitle" id="secretariado">Secretariado da Catequese</div>
@@ -140,17 +371,24 @@
         </div>
       </div>
 
-      <div class="file-upload">
-        <div><strong>📁 Carregar Arquivo Excel</strong></div>
-        <div>Selecione o arquivo dados-catequese.xlsx para carregar os dados:</div>
+      <!-- Debug Mode: File Upload (só aparece se DEBUG_MODE = true) -->
+      <div id="debugUpload" class="debug-upload" style="display:none">
+        <div><strong>🔧 MODO DEBUG ATIVO</strong></div>
+        <div>Carregar arquivo Excel para testes:</div>
         <input type="file" id="fileInput" accept=".xlsx,.xls" />
         <button class="btn" id="loadSampleBtn">📊 Usar Dados de Exemplo</button>
       </div>
 
       <div class="filters">
-        <select id="centroFilter"><option value="">Centro (todos)</option></select>
-        <select id="etapaFilter"><option value="">Etapa (todas)</option></select>
-        <select id="horarioFilter"><option value="">Horário (todos)</option></select>
+        <select id="centroFilter">
+          <option value="">Centro (todos)</option>
+        </select>
+        <select id="etapaFilter">
+          <option value="">Etapa (todas)</option>
+        </select>
+        <select id="horarioFilter">
+          <option value="">Horário (todos)</option>
+        </select>
         <input id="salaSearch" class="sala-field" type="search" inputmode="numeric" placeholder="Sala (ex.: 305)" />
         <input id="catequistaSearch" class="cateq-field" type="search" placeholder="Pesquisar catequista..." />
       </div>
@@ -183,7 +421,8 @@
       <div class="m-body">
         <div class="m-table">
           <div class="m-header">
-            <div>Nome</div><div>Nascimento</div>
+            <div>Nome</div>
+            <div>Nascimento</div>
           </div>
           <div class="m-rows" id="modalRows"></div>
         </div>
@@ -194,7 +433,7 @@
   <script>
     // 🔧 DEBUG MODE: Altere para true para mostrar opção de upload de arquivo
     const DEBUG_MODE = false;
-    
+
     let CONFIG = null;
 
     // Dados de exemplo
@@ -263,7 +502,7 @@
 
     let CURRENT_GROUPS = [];
     let CURRENT_FILTERED = [];
-    
+
     // Utilitários
     const norm = (s) => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
     const fmtDate = (s) => {
@@ -279,24 +518,24 @@
       return s;
     };
     const uniq = (arr) => [...new Set(arr.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt'));
-    
+
     // Carrega configurações do arquivo settings.json
     async function loadConfig() {
       try {
         const response = await fetch('config/settings.json?v=' + Date.now());
         if (!response.ok) throw new Error('Erro ao carregar configurações: ' + response.status);
         CONFIG = await response.json();
-        
+
         // Atualiza interface com configurações
         document.getElementById('logoImg').src = CONFIG.arquivos.logo;
         document.getElementById('paroquiaNome').textContent = CONFIG.paroquia.nome;
         document.getElementById('secretariado').textContent = CONFIG.paroquia.secretariado;
         document.getElementById('anoCatequetico').textContent = CONFIG.paroquia.ano_catequetico;
         document.getElementById('footerText').textContent = `© ${CONFIG.paroquia.nome} — ${CONFIG.paroquia.secretariado}`;
-        
+
         console.log('✅ Configurações carregadas:', CONFIG);
         return CONFIG;
-        
+
       } catch (error) {
         console.error('❌ Erro ao carregar configurações:', error);
         // Valores padrão em caso de erro
@@ -317,14 +556,14 @@
             campos_obrigatorios: ["nome", "centro", "etapa", "sala", "horario", "catequistas"]
           }
         };
-        
+
         // Atualiza interface com valores padrão
         document.getElementById('logoImg').src = CONFIG.arquivos.logo;
         document.getElementById('paroquiaNome').textContent = CONFIG.paroquia.nome;
         document.getElementById('secretariado').textContent = CONFIG.paroquia.secretariado;
         document.getElementById('anoCatequetico').textContent = CONFIG.paroquia.ano_catequetico;
         document.getElementById('footerText').textContent = `© ${CONFIG.paroquia.nome} — ${CONFIG.paroquia.secretariado}`;
-        
+
         return CONFIG;
       }
     }
@@ -333,20 +572,20 @@
     async function loadExcelData() {
       try {
         if (!CONFIG) throw new Error('Configurações não carregadas');
-        
+
         const url = CONFIG.arquivos.dados_principais + '?v=' + Date.now();
         console.log('🔄 Carregando Excel:', url);
-        
+
         const response = await fetch(url);
         if (!response.ok) throw new Error('Erro ao carregar Excel: ' + response.status);
-        
+
         const buffer = await response.arrayBuffer();
         const workbook = XLSX.read(buffer, { type: 'array' });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const json = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-        
+
         if (!json.length) throw new Error('Excel vazio');
-        
+
         const headers = json[0].map(String);
         const idx = mapHeaders(headers);
         const req = CONFIG.validacao?.campos_obrigatorios || ['nome', 'centro', 'etapa'];
@@ -369,13 +608,13 @@
         const searchFactory = applySearchFactory(CURRENT_GROUPS);
         searchFactory.populate();
         searchFactory.apply();
-        
+
         console.log(`✅ ${allData.length} registos carregados do Excel`);
-        
+
       } catch (error) {
         console.error('❌ Erro ao carregar Excel:', error);
         console.log('🔄 Usando dados de exemplo como fallback');
-        
+
         // Usa dados de exemplo como fallback
         const allData = [...SAMPLE_DATA];
         CURRENT_GROUPS = buildGroups(allData);
@@ -384,7 +623,7 @@
         searchFactory.apply();
       }
     }
-    
+
     function mapHeaders(cols) {
       const wanted = {
         nome: ['nome', 'nomecompleto'],
@@ -509,7 +748,7 @@
     function exportXLSX(filtered) {
       try {
         const nomeArquivo = CONFIG.exportacao.nome_arquivo_padrao;
-        
+
         const headerResumo = ['Catequista', 'Centro', 'Etapa', 'Sala', 'Horario', 'Catecumenos'];
         const bodyResumo = filtered.map(g => [g.catequista, g.centro, g.etapa, g.sala, g.horario, g.alunos.length]);
 
@@ -608,15 +847,15 @@
 
     function loadExcelFile(file) {
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function (e) {
         try {
           const data = new Uint8Array(e.target.result);
           const workbook = XLSX.read(data, { type: 'array' });
           const worksheet = workbook.Sheets[workbook.SheetNames[0]];
           const json = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-          
+
           if (!json.length) throw new Error('Excel vazio');
-          
+
           const headers = json[0].map(String);
           const idx = mapHeaders(headers);
           const req = CONFIG.validacao.campos_obrigatorios;
@@ -638,10 +877,10 @@
           const GROUPS = buildGroups(DATA);
           CURRENT_GROUPS = GROUPS;
           applySearchFactory(GROUPS);
-          
+
           document.getElementById('stats').textContent = `${GROUPS.length} grupos carregados do Excel`;
           console.log(`✅ ${GROUPS.length} grupos carregados do Excel`);
-          
+
         } catch (error) {
           console.error('❌ Erro ao carregar Excel:', error);
           document.getElementById('stats').textContent = 'Erro ao carregar Excel: ' + error.message;
@@ -652,7 +891,7 @@
     }
 
     // Event listeners
-    document.getElementById('fileInput').addEventListener('change', function(e) {
+    document.getElementById('fileInput').addEventListener('change', function (e) {
       const file = e.target.files[0];
       if (file) {
         loadExcelFile(file);
@@ -673,19 +912,18 @@
     document.getElementById('exportBtn').addEventListener('click', () => exportXLSX(CURRENT_FILTERED));
 
     // Event listeners para modo debug
+    // Event listeners para modo debug
     if (DEBUG_MODE) {
-      document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('debugUpload').style.display = 'block';
-        
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-          const file = e.target.files[0];
-          if (file) {
-            loadExcelFile(file);
-          }
-        });
+      document.getElementById('debugUpload').style.display = 'block';
 
-        document.getElementById('loadSampleBtn').addEventListener('click', loadSampleData);
+      document.getElementById('fileInput').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+          loadExcelFile(file);
+        }
       });
+
+      document.getElementById('loadSampleBtn').addEventListener('click', loadSampleData);
     }
 
     // Inicialização
@@ -702,4 +940,5 @@
     window.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
+
 </html>
