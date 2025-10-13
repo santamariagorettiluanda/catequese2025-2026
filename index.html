@@ -291,7 +291,135 @@
     }
 
     /* Mobile */
-    @media (max-width: 800px) {
+    /* Responsividade Mobile */
+    @media (max-width: 480px) {
+      .container {
+        padding: 8px;
+        max-width: 100%;
+      }
+
+      .card {
+        margin-bottom: 8px;
+        border-radius: 12px;
+      }
+
+      .hero-brand {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 12px;
+        gap: 8px;
+      }
+
+      .hero-brand img {
+        width: 48px;
+      }
+
+      .title {
+        font-size: 16px;
+      }
+
+      .subtitle {
+        font-size: 14px;
+      }
+
+      .info {
+        font-size: 14px;
+      }
+
+      .meta {
+        font-size: 12px;
+      }
+
+      .searchbar {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .field input[type="search"] {
+        padding: 12px 44px;
+        font-size: 16px;
+      }
+
+      .actions {
+        flex-direction: column;
+        width: 100%;
+        gap: 6px;
+      }
+
+      .actions .btn {
+        width: 100%;
+        justify-content: center;
+        padding: 12px;
+        font-size: 14px;
+      }
+
+      .filters {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .filters select,
+      .filters input[type="search"] {
+        width: 100%;
+        padding: 12px;
+        font-size: 14px;
+      }
+
+      .filters .sala-field,
+      .filters .cateq-field {
+        min-width: auto;
+        flex: none;
+      }
+
+      .stats {
+        padding: 8px 4px;
+        font-size: 12px;
+      }
+
+      .results {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 12px;
+        min-width: 300px;
+      }
+
+      .row.header {
+        display: none;
+      }
+
+      .row>div {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .row>div::before {
+        content: attr(data-label);
+        flex: 0 0 90px;
+        font-weight: 600;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .badge,
+      .tag {
+        font-size: 11px;
+        padding: 3px 6px;
+      }
+
+      .alert {
+        padding: 10px;
+        font-size: 12px;
+      }
+    }
+
+    @media (max-width: 800px) and (min-width: 481px) {
       .hero-brand {
         flex-direction: column;
         align-items: flex-start;
@@ -302,15 +430,17 @@
       }
 
       .actions {
-        width: 100%;
+        flex-wrap: wrap;
+        gap: 8px;
       }
 
       .actions .btn {
         flex: 1;
+        min-width: 140px;
       }
 
       .filters {
-        gap: 6px;
+        gap: 8px;
       }
 
       .row {

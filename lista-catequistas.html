@@ -313,11 +313,167 @@
       background: #fffbf0;
     }
 
-    /* Mobile */
-    @media (max-width: 800px) {
+    /* Responsividade Mobile */
+    @media (max-width: 480px) {
+      .container {
+        padding: 8px;
+        max-width: 100%;
+      }
+      
+      .card {
+        margin-bottom: 8px;
+        border-radius: 12px;
+      }
+      
       .hero-brand {
         flex-direction: column;
         align-items: flex-start;
+        padding: 12px;
+        gap: 8px;
+      }
+      
+      .hero-brand img {
+        width: 48px;
+      }
+      
+      .title {
+        font-size: 16px;
+      }
+      
+      .subtitle {
+        font-size: 14px;
+      }
+      
+      .info {
+        font-size: 14px;
+      }
+      
+      .meta {
+        font-size: 12px;
+      }
+
+      .filters {
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      .filters select,
+      .filters input[type="search"] {
+        width: 100%;
+        padding: 12px;
+        font-size: 14px;
+      }
+      
+      .filters .sala-field,
+      .filters .cateq-field {
+        min-width: auto;
+        flex: none;
+      }
+
+      .actions {
+        flex-direction: column;
+        width: 100%;
+        gap: 6px;
+      }
+
+      .actions .btn {
+        width: 100%;
+        justify-content: center;
+        padding: 12px;
+        font-size: 14px;
+      }
+
+      .stats {
+        padding: 8px 4px;
+        font-size: 12px;
+      }
+      
+      .results {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 12px;
+        min-width: 300px;
+      }
+
+      .row.header {
+        display: none;
+      }
+
+      .row>div {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .row>div::before {
+        content: attr(data-label);
+        flex: 0 0 100px;
+        font-weight: 600;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .modal {
+        max-width: 95vw;
+        margin: 10px;
+      }
+      
+      .modal header {
+        padding: 12px;
+      }
+      
+      .modal .title {
+        font-size: 16px;
+      }
+      
+      .modal .subtitle {
+        font-size: 12px;
+      }
+
+      .m-header {
+        grid-template-columns: 1fr;
+        padding: 8px;
+      }
+
+      .m-row {
+        grid-template-columns: 1fr;
+        padding: 8px;
+        font-size: 12px;
+      }
+
+      .m-row.header {
+        display: none;
+      }
+      
+      .m-table {
+        font-size: 12px;
+      }
+    }
+    
+    @media (max-width: 800px) and (min-width: 481px) {
+      .hero-brand {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .filters {
+        gap: 8px;
+      }
+
+      .actions {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .actions .btn {
+        flex: 1;
+        min-width: 140px;
       }
 
       .row {
