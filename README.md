@@ -1,6 +1,6 @@
-# Sistema de Gestão da Catequese 2025/2026
+# Sistema de Gestão da Catequese
 
-Sistema web completo e funcional para gestão e visualização dos dados da catequese da Paróquia de São Paulo de Luanda.
+Sistema web completo e funcional para gestão e visualização dos dados da catequese.
 
 ## ✅ Funcionalidades 100% Operacionais
 
@@ -106,6 +106,6 @@ O sistema lê dados do arquivo Excel `data/dados-catequese.xlsx` que deve conter
 - **Interface responsiva** para mobile e desktop
 - **Navegação integrada** entre todas as páginas
 
-## 📄 Licença
+## 📄 Licença | Desenvolvido Por
 
-© Paróquia de São Paulo de Luanda — Secretariado da Catequese
+© Catequista Franklin Furtado - (whatsApp) 995 375 669 - Paróquia de São Paulo de Luanda
