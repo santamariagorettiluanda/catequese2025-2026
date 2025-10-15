@@ -24,7 +24,7 @@
     "nome_arquivo_padrao": "catequistas_filtrado"
   },
   "validacao": {
-    "campos_obrigatorios": ["nome", "centro", "etapa", "sala", "horario", "catequistas"],
+    "campos_obrigatorios": ["Nome", "Centro", "Etapa", "Turma", "Horario", "catequistas"],
     "formato_data": "DD/MM/YYYY",
     "idade_minima": 6,
     "idade_maxima": 99
